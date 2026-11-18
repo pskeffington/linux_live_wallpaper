@@ -37,6 +37,31 @@ cargo run --release -- --url http://FEEDER_HOST:8504/
 
 Close the foreground app with Ctrl+C. The app does not yet install an autostart entry.
 
+
+## Install and start at login
+
+After the dependencies are installed, run the deployment helper from the repository root. It builds the release binary, installs it at `~/.local/bin/linux-live-wallpaper`, and enables a per-user systemd service for the graphical session:
+
+```sh
+bash scripts/garuda-deploy.sh install --url http://FEEDER_HOST:8504/
+```
+
+Replace `FEEDER_HOST` with the address of your Tar1090 host. The URL is added to the existing saved source list; the service starts the saved sources at login. Review the current source list with:
+
+```sh
+~/.local/bin/linux-live-wallpaper --list
+```
+
+To open the interactive controller for the current session, run `bash scripts/garuda-deploy.sh run`. The login service runs without the controller. Manage it with:
+
+```sh
+bash scripts/garuda-deploy.sh status
+systemctl --user stop linux-live-wallpaper.service
+systemctl --user start linux-live-wallpaper.service
+```
+
+Remove the service and installed binary with `bash scripts/garuda-deploy.sh remove`; the saved source list is preserved. This helper modifies only files under your home directory and uses systemd user commands; it does not need sudo. The user service relies on the Wayland environment imported by the desktop session, so if it starts before the graphical environment is ready, inspect `journalctl --user -u linux-live-wallpaper.service` and verify `graphical-session.target` is active.
+
 ## Layer-shell support
 
 GTK Layer Shell requires a compositor implementing `zwlr_layer_shell_v1`. The upstream [gtk4-layer-shell supported-compositors list](https://github.com/wmww/gtk4-layer-shell#supported-compositors) includes KDE Plasma on Wayland. Runtime placement and stacking still need to be checked on the particular Garuda/KWin session; a successful compile does not prove the wallpaper sits behind desktop icons.
