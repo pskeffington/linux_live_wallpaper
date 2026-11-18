@@ -26,7 +26,7 @@ Start the wallpaper from saved sources or provide temporary sources directly. Re
 
 ```sh
 cargo run --release
-cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300 --reload-seconds 900
+cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300 --reload-seconds 900 --monitor 0
 ```
 
 Per-run page options include a custom stylesheet, script, color inversion, and surface opacity:
@@ -39,7 +39,7 @@ Custom JavaScript executes in each loaded page at document start. Only use scrip
 
 Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
-For a local Tar1090 dashboard, point the wallpaper at its web root:
+Select one display by its zero-based GDK monitor index with `--monitor INDEX`. Monitor naming and ordering can change when displays are reconnected.\n\nFor a local Tar1090 dashboard, point the wallpaper at its web root:
 
 ```sh
 cargo run --release -- --url http://feeder-host:port/
