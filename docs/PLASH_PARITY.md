@@ -23,7 +23,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Mute audio | WebKit media policy | Muted by default |
 | Aspect-fill single image | Image-source mode with crop-to-fill | CSS targets standalone image documents and fills the wallpaper viewport with `object-fit: cover`; not runtime-verified |
 | Hide tray/menu icon | Optional background service indicator | No tray/service UI yet |
-| Shortcuts / automation | CLI and desktop action interface | Focused controller shortcuts and CLI commands; no desktop-wide shortcut integration |
+| Shortcuts / automation | CLI and desktop action interface | Focused controller shortcuts, a Random source action, and `--random` startup selection; no desktop-wide shortcut integration |
 | Share extension | Linux browser share handler or URL import | Not implemented |
 | Web inspector (Linux-specific) | WebKit Inspector with JavaScript debugger | `Inspect Page` action in browsing-mode context menu; Arch compile verified, window behavior not runtime-tested |
 
