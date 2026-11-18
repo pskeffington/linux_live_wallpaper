@@ -1440,12 +1440,12 @@ fn build_wallpaper(
 
     if deactivate_on_battery {
         let wallpaper_window = window.clone();
-        let controls_window = controls_window.clone();
+        let battery_controls_window = controls_window.clone();
         gtk::glib::timeout_add_seconds_local(30, move || {
             let visible = !is_on_battery();
             wallpaper_window.set_visible(visible);
             if !background {
-                controls_window.set_visible(visible);
+                battery_controls_window.set_visible(visible);
             }
             gtk::glib::ControlFlow::Continue
         });
