@@ -77,6 +77,10 @@ struct Args {
     #[arg(long, default_value = "1.0", value_name = "0.25..5.0")]
     zoom: String,
 
+    /// Trust self-signed TLS certificates for this host only (repeatable; host excludes port).
+    #[arg(long = "allow-self-signed", value_name = "HOST", action = clap::ArgAction::Append)]
+    allow_self_signed_hosts: Vec<String>,
+
     /// Custom HTTP User-Agent for loaded web pages.
     #[arg(long, value_name = "STRING")]
     user_agent: Option<String>,
@@ -179,6 +183,14 @@ fn main() -> Result<()> {
 
     let opacity = parse_opacity(&args.opacity)?;
     let zoom = parse_zoom(&args.zoom)?;
+    let allow_self_signed_hosts: Vec<String> = args
+        .allow_self_signed_hosts
+        .iter()
+        .map(|host| {
+            normalize_tls_host(host)
+                .with_context(|| format!("invalid host for --allow-self-signed: {host}"))
+        })
+        .collect::<Result<_>>()?;
     let user_agent = args.user_agent;
     let custom_css = read_optional_file(args.css_file.as_ref())?;
     let custom_js = read_optional_file(args.js_file.as_ref())?;
@@ -207,6 +219,7 @@ fn main() -> Result<()> {
             opacity,
             zoom,
             user_agent.as_deref(),
+            &allow_self_signed_hosts,
             invert_colors,
             transparent_background,
             deactivate_on_battery,
@@ -384,6 +397,20 @@ fn parse_zoom(value: &str) -> Result<f64> {
     Ok(zoom)
 }
 
+fn normalize_tls_host(host: &str) -> Option<String> {
+    let host = host.trim();
+    if host.is_empty()
+        || host.contains("://")
+        || host.contains('/')
+        || host.contains('@')
+        || host.contains(':')
+        || host.chars().any(char::is_whitespace)
+    {
+        return None;
+    }
+    Some(host.trim_end_matches('.').to_ascii_lowercase())
+}
+
 fn is_supported_url(address: &str) -> bool {
     let Some((scheme, remainder)) = address.split_once("://") else {
         return false;
@@ -403,6 +430,7 @@ fn build_wallpaper(
     opacity: f64,
     zoom: f64,
     user_agent: Option<&str>,
+    allow_self_signed_hosts: &[String],
     invert_colors: bool,
     transparent_background: bool,
     deactivate_on_battery: bool,
@@ -463,10 +491,37 @@ fn build_wallpaper(
     if let Some(user_agent) = user_agent {
         settings.set_user_agent(Some(user_agent));
     }
+    let network_session = webkit::NetworkSession::default();
+    network_session.set_tls_errors_policy(webkit::TLSErrorsPolicy::Fail);
     let webview = webkit::WebView::builder()
+        .network_session(&network_session)
         .settings(&settings)
         .user_content_manager(&content_manager)
         .build();
+    if !allow_self_signed_hosts.is_empty() {
+        let allowed_hosts = allow_self_signed_hosts.to_vec();
+        let network_session = network_session.clone();
+        webview.connect_load_failed_with_tls_errors(move |_, failing_uri, certificate, errors| {
+            if errors != gtk::gio::TlsCertificateFlags::UNKNOWN_CA {
+                return false;
+            }
+            let Ok(uri) = gtk::glib::Uri::parse(failing_uri, gtk::glib::UriFlags::NONE) else {
+                return false;
+            };
+            let Some(host) = uri.host() else {
+                return false;
+            };
+            let Some(host) = normalize_tls_host(host.as_str()) else {
+                return false;
+            };
+            if allowed_hosts.iter().any(|allowed| allowed == &host) {
+                network_session.allow_tls_certificate_for_host(certificate, &host);
+                true
+            } else {
+                false
+            }
+        });
+    }
     webview.set_opacity(source_settings.borrow()[&urls[0]].opacity);
     webview.set_zoom_level(source_settings.borrow()[&urls[0]].zoom);
     if transparent_background {
