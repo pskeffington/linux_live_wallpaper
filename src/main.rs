@@ -668,7 +668,9 @@ fn build_wallpaper(
         gtk::glib::timeout_add_seconds_local(30, move || {
             let visible = !is_on_battery();
             wallpaper_window.set_visible(visible);
-            controls_window.set_visible(visible);
+            if !background {
+                controls_window.set_visible(visible);
+            }
             gtk::glib::ControlFlow::Continue
         });
         if is_on_battery() {
