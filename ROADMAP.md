@@ -41,7 +41,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add WebKit Back/Forward history controls to the native controller.
 - [ ] Remember browsing preferences and add navigation-state affordances.
 - [x] Add opt-in battery-aware hiding based on Linux power-supply status.
-- [ ] Add remaining parity items, including image aspect-fill and richer power-management integration.
+- [x] Add CSS aspect-fill behavior for standalone image documents (pending WebKit runtime verification).
+- [ ] Add remaining parity items, including richer power-management integration.
 
 ## Milestone 3 — Linux desktop integration
 
