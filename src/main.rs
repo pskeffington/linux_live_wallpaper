@@ -770,6 +770,11 @@ fn build_wallpaper(
     user_agent_entry.set_text(initial_page_settings.user_agent.as_deref().unwrap_or(""));
     controls.append(&user_agent_entry);
 
+    let monitor_entry = gtk::Entry::new();
+    monitor_entry.set_placeholder_text(Some("Display connector (blank uses launch monitor)"));
+    monitor_entry.set_text(initial_page_settings.monitor_connector.as_deref().unwrap_or(""));
+    controls.append(&monitor_entry);
+
     let source_entry = gtk::Entry::new();
     source_entry.set_placeholder_text(Some("https://example.com"));
     controls.append(&source_entry);
@@ -862,6 +867,15 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
+        let active_source_path = active_source_path.clone();
+        let sources = sources.clone();
+        let current = current.clone();
         save_settings_button.connect_clicked(move |_| {
             let parsed_zoom = match parse_zoom(zoom_entry.text().trim()) {
                 Ok(value) => value,
@@ -899,6 +913,15 @@ fn build_wallpaper(
             } else {
                 Some(user_agent_text)
             };
+            let monitor_text = monitor_entry.text().trim().to_owned();
+            let monitor_connector = if monitor_text.is_empty() {
+                None
+            } else if find_monitor_by_connector(&display, &monitor_text).is_some() {
+                Some(monitor_text)
+            } else {
+                status.set_text("That display connector is not currently connected.");
+                return;
+            };
             {
                 let mut all_settings = settings.borrow_mut();
                 let Some(page) = all_settings.get_mut(&address) else {
@@ -911,15 +934,37 @@ fn build_wallpaper(
                 page.custom_css = Some(css_text);
                 page.custom_js = Some(js_text);
                 page.user_agent = user_agent;
+                page.monitor_connector = monitor_connector;
             }
             if let Err(error) = save_source_settings(&settings_path, &settings.borrow()) {
                 status.set_text(&format!("Could not save page settings: {error}"));
                 return;
             }
             let page = settings.borrow()[&address].clone();
-            apply_source_customizations(&content_manager, &base_css, &page, &web_settings);
-            view.set_zoom_level(parsed_zoom);
-            view.set_opacity(parsed_opacity);
+            load_current(
+                &view,
+                &sources,
+                &current,
+                &status,
+                &settings,
+                &content_manager,
+                &base_css,
+                &web_settings,
+                &css_buffer,
+                &js_buffer,
+                &user_agent_entry,
+                &monitor_entry,
+                &zoom_entry,
+                &opacity_entry,
+                &reload_entry,
+                &display,
+                &window,
+                &launch_monitor,
+                &selected_monitor,
+                &screen_dimensions,
+                screen_dimensions.get(),
+                active_source_path.as_ref().as_deref(),
+            );
             view.reload();
             status.set_text("Saved settings for this page.");
         });
