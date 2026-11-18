@@ -15,7 +15,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Custom CSS and JavaScript | Explicit per-source customization fields | Launch-time files via `--css-file` and `--js-file`; not saved per source |
 | Opacity | Surface opacity where compositor supports it | Launch-time `--opacity` |
 | Transparent background | Web view transparency where supported | Launch-time `--transparent-background`; actual alpha rendering depends on compositor support |
-| Deactivate on battery | Power state integration, with manual override | Not implemented |
+| Deactivate on battery | Power state integration, with manual override | Opt-in `--deactivate-on-battery` polls Linux battery status every 30 seconds and hides the window while discharging |
 | Mute audio | WebKit media policy | Muted by default |
 | Aspect-fill single image | Image-source mode with crop-to-fill | Not implemented |
 | Hide tray/menu icon | Optional background service indicator | No tray/service UI yet |
