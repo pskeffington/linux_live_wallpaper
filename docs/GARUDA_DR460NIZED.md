@@ -35,7 +35,7 @@ cargo run --release -- --list-monitors
 cargo run --release -- --url http://172.20.30.64:8504/ --monitor 0
 ```
 
-Replace `0` with the desired zero-based index from the monitor listing. The deployment helper accepts the same index with `--monitor 0`, preserving the selected output when its login service starts. The app needs the dashboard web root, not Tar1090's `data/aircraft.json` endpoint. If the feed does not load, first check that `http://172.20.30.64:8504/` opens from the same desktop session.
+Replace `0` with the desired zero-based index from the monitor listing. The deployment helper accepts the same index with `--monitor 0`, preserving the selected output when its login service starts. In the controller, enter the GDK connector name (for example, `DP-1`) in the active page's display field and save settings to assign that source to an output. The assignment is stored in `settings.tsv`; unplugging that output falls back to the launch output or first connected display, and reconnecting it restores the assignment. The app needs the dashboard web root, not Tar1090's `data/aircraft.json` endpoint. If the feed does not load, first check that `http://172.20.30.64:8504/` opens from the same desktop session.
 
 Close the foreground app with Ctrl+C. For a self-signed HTTPS dashboard, pass `--allow-self-signed HOST`; the exception accepts only unknown-CA errors for that host, and the certificate hostname must still match.
 
