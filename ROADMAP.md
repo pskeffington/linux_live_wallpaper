@@ -27,14 +27,16 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add, remove and list sources from the command line.
 - [x] Start with saved sources or pass temporary sources explicitly.
 - [ ] Save customization settings per source instead of using launch-wide options.
-- [ ] Native settings window and tray/background service.
+- [x] Native controller window with Previous/Next/Reload and browsing-mode toggle.
+- [ ] Full settings window and tray/background service.
 - [ ] Reorder sources and switch among them interactively.
 - [ ] Restore wallpaper state after login.
 - [ ] Reload, navigation controls and web inspector/developer tools.
 - [x] Configure launch-time page zoom and user-agent.
 - [x] List available displays and select one by its zero-based GDK monitor index.
 - [ ] Persist per-source display assignments and handle multi-monitor hotplug.
-- [ ] Interactive browsing mode toggle, click-through mode and navigation controls.
+- [x] Click-through wallpaper surface with a native browsing-mode toggle and on-demand keyboard focus.
+- [ ] In-page navigation controls and remembered browsing preferences.
 - [x] Add opt-in battery-aware hiding based on Linux power-supply status.
 - [ ] Add remaining parity items, including image aspect-fill and richer power-management integration.
 
