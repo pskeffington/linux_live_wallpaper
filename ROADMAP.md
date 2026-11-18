@@ -41,7 +41,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Persist per-source GDK output connector assignments; move the wallpaper on source changes and fall back/reselect when monitors are removed or reconnected (runtime validation remains open).
 - [x] Click-through wallpaper surface with a native browsing-mode toggle and on-demand keyboard focus.
 - [x] Add WebKit Back/Forward history controls to the native controller.
-- [ ] Remember browsing preferences and add navigation-state affordances.
+- [x] Remember browsing-mode preference for saved-source launches and report loading, committed-response, completion, and failure states; explicit `--url` sessions remain temporary.
 - [x] Add opt-in battery-aware hiding based on Linux power-supply status.
 - [x] Add CSS aspect-fill behavior for standalone image documents (pending WebKit runtime verification).
 - [ ] Add remaining parity items, including richer power-management integration.
