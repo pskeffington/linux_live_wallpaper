@@ -35,7 +35,7 @@ For example, for a feeder with a root page at port 8504:
 cargo run --release -- --url http://FEEDER_HOST:8504/
 ```
 
-Close the foreground app with Ctrl+C. The app does not yet install an autostart entry.
+Close the foreground app with Ctrl+C. For per-user login startup, use the deployment helper below.
 
 
 ## Install and start at login
@@ -60,7 +60,7 @@ systemctl --user stop linux-live-wallpaper.service
 systemctl --user start linux-live-wallpaper.service
 ```
 
-Remove the service and installed binary with `bash scripts/garuda-deploy.sh remove`; the saved source list is preserved. This helper modifies only files under your home directory and uses systemd user commands; it does not need sudo. The user service relies on the Wayland environment imported by the desktop session, so if it starts before the graphical environment is ready, inspect `journalctl --user -u linux-live-wallpaper.service` and verify `graphical-session.target` is active.
+Remove the service and installed binary with `bash scripts/garuda-deploy.sh remove`; the saved source list is preserved. This helper modifies only files under your home directory and uses systemd user commands; it does not need sudo. The installer imports the active `DISPLAY`, `WAYLAND_DISPLAY`, session type, runtime directory, and D-Bus address into systemd’s user manager. The service is ordered after `graphical-session.target` and is conditioned on a Wayland session. If it does not start, inspect `systemctl --user status linux-live-wallpaper.service`, `journalctl --user -u linux-live-wallpaper.service`, and `systemctl --user show-environment`.
 
 ## Layer-shell support
 
