@@ -19,6 +19,7 @@ struct SourceSettings {
     custom_css: Option<String>,
     custom_js: Option<String>,
     user_agent: Option<String>,
+    monitor_connector: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -324,7 +325,7 @@ fn load_source_settings(
     let mut settings = HashMap::new();
     for (line_number, line) in contents.lines().enumerate() {
         let fields: Vec<_> = line.split('\t').collect();
-        if fields.len() != 3 && fields.len() != 4 && fields.len() != 7 {
+        if fields.len() != 3 && fields.len() != 4 && fields.len() != 7 && fields.len() != 8 {
             bail!("invalid source settings at {}:{}", path.display(), line_number + 1);
         }
         let url = decode_hex(fields[0]).with_context(|| {
@@ -333,7 +334,7 @@ fn load_source_settings(
         let zoom = parse_zoom(fields[1]).with_context(|| {
             format!("invalid zoom setting at {}:{}", path.display(), line_number + 1)
         })?;
-        let (opacity, reload_field) = if fields.len() == 4 || fields.len() == 7 {
+        let (opacity, reload_field) = if fields.len() == 4 || fields.len() == 7 || fields.len() == 8 {
             (parse_opacity(fields[2])?, fields[3])
         } else {
             (defaults.opacity, fields[2])
@@ -345,7 +346,7 @@ fn load_source_settings(
         source.zoom = zoom;
         source.opacity = opacity;
         source.reload_seconds = reload_seconds;
-        if fields.len() == 7 {
+        if fields.len() == 7 || fields.len() == 8 {
             source.custom_css = decode_optional_hex(fields[4]).with_context(|| {
                 format!("invalid CSS setting at {}:{}", path.display(), line_number + 1)
             })?;
@@ -354,6 +355,11 @@ fn load_source_settings(
             })?;
             source.user_agent = decode_optional_hex(fields[6]).with_context(|| {
                 format!("invalid user-agent setting at {}:{}", path.display(), line_number + 1)
+            })?;
+        }
+        if fields.len() == 8 {
+            source.monitor_connector = decode_optional_hex(fields[7]).with_context(|| {
+                format!("invalid monitor assignment at {}:{}", path.display(), line_number + 1)
             })?;
         }
         settings.insert(url, source);
@@ -373,7 +379,7 @@ fn save_source_settings(path: &PathBuf, settings: &HashMap<String, SourceSetting
     for url in urls {
         let setting = &settings[url];
         contents.push_str(&format!(
-            "{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
             encode_hex(url.as_bytes()),
             setting.zoom,
             setting.opacity,
@@ -381,6 +387,7 @@ fn save_source_settings(path: &PathBuf, settings: &HashMap<String, SourceSetting
             encode_optional_hex(setting.custom_css.as_deref()),
             encode_optional_hex(setting.custom_js.as_deref()),
             encode_optional_hex(setting.user_agent.as_deref()),
+            encode_optional_hex(setting.monitor_connector.as_deref()),
         ));
     }
     fs::write(path, contents).with_context(|| format!("could not write {}", path.display()))
@@ -562,6 +569,7 @@ fn build_wallpaper(
         custom_css: custom_css.clone(),
         custom_js: custom_js.clone(),
         user_agent: user_agent.map(str::to_owned),
+        monitor_connector: None,
     };
     let mut loaded_settings = load_source_settings(&settings_path, &default_page_settings)?;
     for address in urls {
@@ -1273,6 +1281,7 @@ fn load_current(
         custom_css: None,
         custom_js: None,
         user_agent: None,
+        monitor_connector: None,
     });
     let resolved_address = resolve_url(&address, screen_dimensions);
     apply_source_customizations(content_manager, base_css, &setting, web_settings);
