@@ -7,7 +7,7 @@ use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use webkit::prelude::*;
 
@@ -168,6 +168,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
+    let restore_saved_source = args.urls.is_empty();
     let urls = if args.urls.is_empty() {
         if saved_sources.is_empty() {
             bail!("No wallpaper sources configured. Add one with --add URL or start with --url URL.");
@@ -224,6 +225,7 @@ fn main() -> Result<()> {
             transparent_background,
             deactivate_on_battery,
             background,
+            restore_saved_source,
             &custom_css,
             &custom_js,
         ) {
@@ -278,6 +280,31 @@ fn save_sources(path: &PathBuf, sources: &[String]) -> Result<()> {
         contents.push('\n');
     }
     fs::write(path, contents).with_context(|| format!("could not write {}", path.display()))
+}
+
+fn load_active_source_index(path: &Path, sources: &[String]) -> Result<usize> {
+    let saved_source = match fs::read_to_string(path) {
+        Ok(source) => source,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(0),
+        Err(error) => {
+            return Err(error).with_context(|| format!("could not read {}", path.display()));
+        }
+    };
+    let saved_source = saved_source.trim();
+    Ok(sources
+        .iter()
+        .position(|source| source == saved_source)
+        .unwrap_or(0))
+}
+
+fn save_active_source(path: &Path, source: &str) -> Result<()> {
+    let parent = path
+        .parent()
+        .context("active-source path must have a parent directory")?;
+    fs::create_dir_all(parent)
+        .with_context(|| format!("could not create {}", parent.display()))?;
+    fs::write(path, format!("{source}\n"))
+        .with_context(|| format!("could not write {}", path.display()))
 }
 
 fn load_source_settings(
@@ -435,6 +462,7 @@ fn build_wallpaper(
     transparent_background: bool,
     deactivate_on_battery: bool,
     background: bool,
+    restore_saved_source: bool,
     custom_css: &Option<String>,
     custom_js: &Option<String>,
 ) -> Result<()> {
@@ -457,6 +485,12 @@ fn build_wallpaper(
     );
 
     let settings_path = config_path.with_file_name("settings.tsv");
+    let active_source_path = restore_saved_source
+        .then(|| config_path.with_file_name("active-source.txt"));
+    let initial_index = match active_source_path.as_deref() {
+        Some(path) => load_active_source_index(path, urls)?,
+        None => 0,
+    };
     let mut loaded_settings = load_source_settings(&settings_path, opacity)?;
     for address in urls {
         loaded_settings.entry(address.clone()).or_insert(SourceSettings {
@@ -536,17 +570,17 @@ fn build_wallpaper(
             }
         });
     }
-    webview.set_opacity(source_settings.borrow()[&urls[0]].opacity);
-    webview.set_zoom_level(source_settings.borrow()[&urls[0]].zoom);
+    webview.set_opacity(source_settings.borrow()[&urls[initial_index]].opacity);
+    webview.set_zoom_level(source_settings.borrow()[&urls[initial_index]].zoom);
     if transparent_background {
         webview.set_background_color(&gtk::gdk::RGBA::new(0.0, 0.0, 0.0, 0.0));
     }
     webview.set_is_muted(true);
-    let initial_url = resolve_url(&urls[0], screen_dimensions);
+    let initial_url = resolve_url(&urls[initial_index], screen_dimensions);
     webview.load_uri(&initial_url);
 
     let sources = Rc::new(RefCell::new(urls.to_vec()));
-    let current = Rc::new(Cell::new(0usize));
+    let current = Rc::new(Cell::new(initial_index));
 
     let window = ApplicationWindow::builder()
         .application(app)
@@ -581,7 +615,7 @@ fn build_wallpaper(
     window.present();
     set_wallpaper_interactive(&window, false);
 
-    let status = gtk::Label::new(Some(&sources.borrow()[0]));
+    let status = gtk::Label::new(Some(&sources.borrow()[initial_index]));
     status.set_wrap(true);
     status.set_xalign(0.0);
 
@@ -613,13 +647,13 @@ fn build_wallpaper(
     let page_settings = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let zoom_entry = gtk::Entry::new();
     zoom_entry.set_placeholder_text(Some("Zoom (0.25–5.0)"));
-    zoom_entry.set_text(&source_settings.borrow()[&sources.borrow()[0]].zoom.to_string());
+    zoom_entry.set_text(&source_settings.borrow()[&sources.borrow()[initial_index]].zoom.to_string());
     let opacity_entry = gtk::Entry::new();
     opacity_entry.set_placeholder_text(Some("Opacity (0.0–1.0)"));
-    opacity_entry.set_text(&source_settings.borrow()[&sources.borrow()[0]].opacity.to_string());
+    opacity_entry.set_text(&source_settings.borrow()[&sources.borrow()[initial_index]].opacity.to_string());
     let reload_entry = gtk::Entry::new();
     reload_entry.set_placeholder_text(Some("Reload seconds (0 disables)"));
-    reload_entry.set_text(&source_settings.borrow()[&sources.borrow()[0]].reload_seconds.to_string());
+    reload_entry.set_text(&source_settings.borrow()[&sources.borrow()[initial_index]].reload_seconds.to_string());
     let save_settings_button = gtk::Button::with_label("Save page settings");
     page_settings.append(&zoom_entry);
     page_settings.append(&opacity_entry);
@@ -664,12 +698,14 @@ fn build_wallpaper(
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
+let active_source_path = active_source_path.clone();
+let active_source_path = active_source_path.clone();
         previous_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + list.len() - 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
         });
     }
     {
@@ -681,12 +717,13 @@ fn build_wallpaper(
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
+let active_source_path = active_source_path.clone();
         next_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
         });
     }
     {
@@ -783,6 +820,7 @@ fn build_wallpaper(
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
+let active_source_path = active_source_path.clone();
         add_button.connect_clicked(move |_| {
             let address = entry.text().trim().to_owned();
             if !is_supported_url(&address) {
@@ -815,7 +853,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(sources.borrow().len() - 1);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
             entry.set_text("");
         });
     }
@@ -830,6 +868,7 @@ fn build_wallpaper(
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
+let active_source_path = active_source_path.clone();
         remove_button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             if updated.len() <= 1 {
@@ -848,7 +887,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(current.get().min(sources.borrow().len() - 1));
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
         });
     }
     for (button, direction) in [(&move_up_button, -1isize), (&move_down_button, 1isize)] {
@@ -875,7 +914,7 @@ fn build_wallpaper(
             }
             *sources.borrow_mut() = updated;
             current.set(target as usize);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
         });
     }
 
@@ -923,6 +962,7 @@ fn build_wallpaper(
         let wallpaper = window.clone();
         let browsing = browsing.clone();
         let browse_button = browse_button.clone();
+let active_source_path = active_source_path.clone();
         key_controller.connect_key_pressed(move |_, key, _, modifiers| {
             use gtk::gdk::{Key, ModifierType};
 
@@ -934,14 +974,14 @@ fn build_wallpaper(
                 let index = (current.get() + list.len() - 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
                 let list = sources.borrow();
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
@@ -969,13 +1009,14 @@ fn build_wallpaper(
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
+let active_source_path = active_source_path.clone();
         gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
             let list = sources.borrow();
             if list.len() > 1 {
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
             }
             gtk::glib::ControlFlow::Continue
         });
@@ -1053,6 +1094,7 @@ fn load_current(
     opacity_entry: &gtk::Entry,
     reload_entry: &gtk::Entry,
     screen_dimensions: (u32, u32),
+    active_source_path: Option<&Path>,
 ) {
     let list = sources.borrow();
     if list.is_empty() {
@@ -1072,6 +1114,11 @@ fn load_current(
     view.set_zoom_level(setting.zoom);
     view.set_opacity(setting.opacity);
     status.set_text(&address);
+    if let Some(path) = active_source_path {
+        if let Err(error) = save_active_source(path, &address) {
+            status.set_text(&format!("Selected page, but could not save resume state: {error:#}"));
+        }
+    }
     zoom_entry.set_text(&setting.zoom.to_string());
     opacity_entry.set_text(&setting.opacity.to_string());
     reload_entry.set_text(&setting.reload_seconds.to_string());
