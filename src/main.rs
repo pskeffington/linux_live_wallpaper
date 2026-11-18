@@ -232,7 +232,9 @@ fn build_wallpaper(
         content_manager.add_script(&script);
     }
 
-    let webview = webkit::WebView::with_user_content_manager(&content_manager);
+    let webview = webkit::WebView::builder()
+        .user_content_manager(&content_manager)
+        .build();
     webview.set_opacity(opacity);
     webview.set_is_muted(true);
     webview.load_uri(&urls[0]);
