@@ -26,7 +26,7 @@ Start the wallpaper from saved sources or provide temporary sources directly. Re
 
 ```sh
 cargo run --release
-cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300
+cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300 --reload-seconds 900
 ```
 
 Per-run page options include a custom stylesheet, script, color inversion, and surface opacity:
