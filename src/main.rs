@@ -55,6 +55,10 @@ struct Args {
     /// Opacity for the complete wallpaper surface, from 0.0 (transparent) to 1.0 (opaque).
     #[arg(long, default_value = "1.0", value_name = "0.0..1.0")]
     opacity: String,
+
+    /// Request a transparent web and GTK window background (compositor support varies).
+    #[arg(long)]
+    transparent_background: bool,
 }
 
 fn main() -> Result<()> {
@@ -111,6 +115,7 @@ fn main() -> Result<()> {
     let rotate_seconds = args.rotate_seconds;
     let reload_seconds = args.reload_seconds;
     let invert_colors = args.invert_colors;
+    let transparent_background = args.transparent_background;
 
     let app = Application::builder()
         .application_id("io.github.pskeffington.LinuxLiveWallpaper")
@@ -123,6 +128,7 @@ fn main() -> Result<()> {
             reload_seconds,
             opacity,
             invert_colors,
+            transparent_background,
             &custom_css,
             &custom_js,
         ) {
@@ -204,6 +210,7 @@ fn build_wallpaper(
     reload_seconds: u32,
     opacity: f64,
     invert_colors: bool,
+    transparent_background: bool,
     custom_css: &Option<String>,
     custom_js: &Option<String>,
 ) -> Result<()> {
@@ -243,6 +250,9 @@ fn build_wallpaper(
         .user_content_manager(&content_manager)
         .build();
     webview.set_opacity(opacity);
+    if transparent_background {
+        webview.set_background_color(&gtk::gdk::RGBA::new(0.0, 0.0, 0.0, 0.0));
+    }
     webview.set_is_muted(true);
     webview.load_uri(&urls[0]);
 
@@ -271,6 +281,20 @@ fn build_wallpaper(
         .title("Linux Live Wallpaper")
         .child(&webview)
         .build();
+
+    if transparent_background {
+        let provider = gtk::CssProvider::new();
+        provider.load_from_data(
+            "window.linux-live-wallpaper-transparent { background-color: transparent; }",
+        );
+        let display = gtk::gdk::Display::default().context("no GDK display is available")?;
+        gtk::style_context_add_provider_for_display(
+            &display,
+            &provider,
+            gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        );
+        window.add_css_class("linux-live-wallpaper-transparent");
+    }
 
     window.init_layer_shell();
     window.set_namespace("linux-live-wallpaper");
