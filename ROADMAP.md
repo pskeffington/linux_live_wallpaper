@@ -13,7 +13,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 
 - [x] Implement a full-output Wayland background layer with a WebKitGTK view (not yet build-verified).
 - [x] Accept one or more web URLs from the command line.
-- [x] Add opt-in timed switching between configured URLs.\n- [x] Add configurable interval-based page reload.
+- [x] Add opt-in timed switching between configured URLs.
+- [x] Add configurable interval-based page reload.
 - [x] Reject unsupported URL schemes.
 - [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request and muted audio.
 - [ ] Verify compilation and runtime on Arch Linux with a layer-shell-capable compositor.
@@ -52,7 +53,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 ## Milestone 5 — Arch distribution quality
 
 - [x] Generate and commit Cargo.lock; use locked builds.
-- [x] Add an Arch dependency installer and Garuda Dr460nized deployment guide.\n- [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
+- [x] Add an Arch dependency installer and Garuda Dr460nized deployment guide.
+- [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
 - [ ] AUR release workflow and signed tags.
 - [ ] CI: formatting, clippy, unit tests and build on supported Arch image.
 - [ ] Document install, upgrade, removal, troubleshooting and compositor limitations.
