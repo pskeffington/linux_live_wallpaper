@@ -29,10 +29,10 @@ cargo run --release
 cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300 --reload-seconds 900 --monitor 0
 ```
 
-Per-run page options include a custom stylesheet, script, color inversion, and surface opacity:
+Per-run page options include custom CSS and JavaScript, color inversion, surface opacity, page zoom, and a custom user-agent:
 
 ```sh
-cargo run --release -- --url https://example.com --css-file wallpaper.css --js-file wallpaper.js --invert-colors --opacity 0.85 --transparent-background --deactivate-on-battery
+cargo run --release -- --url https://example.com --css-file wallpaper.css --js-file wallpaper.js --invert-colors --opacity 0.85 --zoom 1.15 --user-agent 'Mozilla/5.0' --transparent-background --deactivate-on-battery
 ```
 
 Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. Opacity must be between 0.0 and 1.0.
