@@ -13,6 +13,14 @@ bash scripts/install-arch-deps.sh
 cargo build --release --locked
 ```
 
+On Garuda Dr460nized, the per-user deployment helper also builds and installs the app and can enable a systemd user service for login:
+
+```sh
+bash scripts/garuda-deploy.sh install --url http://FEEDER_HOST:8504/
+```
+
+Replace `FEEDER_HOST` with your Tar1090 host. See [docs/GARUDA_DR460NIZED.md](docs/GARUDA_DR460NIZED.md) for start, stop, status, and removal instructions.
+
 Add and inspect persistent sources:
 
 ```sh
