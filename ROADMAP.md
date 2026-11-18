@@ -31,7 +31,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Reorder sources and switch among them interactively.
 - [ ] Restore wallpaper state after login.
 - [ ] Reload, navigate, zoom and web inspector/developer tools controls.
-- [x] Select one display by its zero-based GDK monitor index.\n- [ ] Persist per-source display assignments and handle multi-monitor hotplug.
+- [x] List available displays and select one by its zero-based GDK monitor index.\n- [ ] Persist per-source display assignments and handle multi-monitor hotplug.
 - [ ] Interactive browsing mode toggle, click-through mode and navigation controls.
 - [ ] Add the remaining items in the public parity matrix, including display selection, battery-aware behavior and image aspect-fill.
 
