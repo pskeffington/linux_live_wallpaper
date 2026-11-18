@@ -1507,10 +1507,14 @@ fn build_wallpaper(
         let launch_monitor = launch_monitor.clone();
         let selected_monitor = selected_monitor.clone();
         let screen_dimensions = screen_dimensions.clone();
+        let app = app.clone();
         key_controller.connect_key_pressed(move |_, key, _, modifiers| {
             use gtk::gdk::{Key, ModifierType};
 
-            if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::r {
+            if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::q {
+                app.quit();
+                gtk::glib::Propagation::Stop
+            } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::r {
                 view.reload();
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Left {
