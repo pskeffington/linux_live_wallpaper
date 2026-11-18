@@ -81,7 +81,12 @@ RestartSec=3
 WantedBy=graphical-session.target
 EOF
     systemctl --user daemon-reload
-    systemctl --user enable --now linux-live-wallpaper.service
+    if ! systemctl --user is-active --quiet graphical-session.target; then
+      printf '%s\n' "The graphical-session.target is not active yet; enabling service for the next login."
+      systemctl --user enable linux-live-wallpaper.service
+    else
+      systemctl --user enable --now linux-live-wallpaper.service
+    fi
     printf 'Installed %s and enabled the user service.\n' "$binary"
     printf 'Controller UI: run %s to open it interactively.\n' "$binary"
     ;;
