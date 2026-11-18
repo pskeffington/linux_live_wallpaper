@@ -13,7 +13,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 
 - [x] Implement a full-output Wayland background layer with a WebKitGTK view (not yet build-verified).
 - [x] Accept one or more web URLs from the command line.
-- [x] Add opt-in timed switching between configured URLs.
+- [x] Add opt-in timed switching between configured URLs.\n- [x] Add configurable interval-based page reload.
 - [x] Reject unsupported URL schemes.
 - [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity and muted audio.
 - [ ] Verify compilation and runtime on Arch Linux with a layer-shell-capable compositor.
@@ -32,7 +32,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Reload, navigate, zoom and web inspector/developer tools controls.
 - [ ] Choose a display and handle multi-monitor hotplug.
 - [ ] Interactive browsing mode toggle, click-through mode and navigation controls.
-- [ ] Add the remaining items in the public parity matrix, including refresh timing, display selection, battery-aware behavior and image aspect-fill.
+- [ ] Add the remaining items in the public parity matrix, including display selection, battery-aware behavior and image aspect-fill.
 
 ## Milestone 3 — Linux desktop integration
 
