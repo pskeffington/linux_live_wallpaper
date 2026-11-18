@@ -80,6 +80,10 @@ struct Args {
     /// Hide the wallpaper while a Linux battery reports discharging.
     #[arg(long)]
     deactivate_on_battery: bool,
+
+    /// Run without the native controller window (intended for session autostart).
+    #[arg(long)]
+    background: bool,
 }
 
 fn main() -> Result<()> {
@@ -177,11 +181,14 @@ fn main() -> Result<()> {
     let invert_colors = args.invert_colors;
     let transparent_background = args.transparent_background;
     let deactivate_on_battery = args.deactivate_on_battery;
+    let background = args.background;
+    let startup_error = Rc::new(RefCell::new(None::<String>));
 
     let app = Application::builder()
         .application_id("io.github.pskeffington.LinuxLiveWallpaper")
         .build();
     let config_file = config_path.clone();
+    let activation_error = startup_error.clone();
     app.connect_activate(move |app| {
         if let Err(error) = build_wallpaper(
             app,
@@ -196,13 +203,20 @@ fn main() -> Result<()> {
             invert_colors,
             transparent_background,
             deactivate_on_battery,
+            background,
             &custom_css,
             &custom_js,
         ) {
-            eprintln!("Could not create wallpaper surface: {error:#}");
+            let message = format!("Could not create wallpaper surface: {error:#}");
+            eprintln!("{message}");
+            *activation_error.borrow_mut() = Some(message);
+            app.quit();
         }
     });
     app.run();
+    if let Some(error) = startup_error.borrow_mut().take() {
+        bail!(error);
+    }
     Ok(())
 }
 
@@ -291,6 +305,7 @@ fn build_wallpaper(
     invert_colors: bool,
     transparent_background: bool,
     deactivate_on_battery: bool,
+    background: bool,
     custom_css: &Option<String>,
     custom_js: &Option<String>,
 ) -> Result<()> {
@@ -642,7 +657,11 @@ fn build_wallpaper(
         });
     }
 
-    controls_window.present();
+    if !background {
+        controls_window.present();
+    } else {
+        controls_window.set_visible(false);
+    }
 
     if deactivate_on_battery {
         let wallpaper_window = window.clone();
