@@ -1,6 +1,6 @@
 # Roadmap
 
-The product goal is a Linux implementation of Plash's user-visible live-wallpaper workflow, with Arch Linux as the first-class packaging and build target. “Replica” means matching the user-facing capabilities where Linux desktop protocols permit; macOS-specific APIs and desktop integration must be reimplemented with native Linux equivalents.
+The product goal is an independent Linux implementation of Plash's user-visible live-wallpaper workflow, with Arch Linux as the first-class build and packaging target. The original Plash app is no longer open source; parity targets are derived from its public product documentation in [PLASH_PARITY.md](docs/PLASH_PARITY.md). macOS-specific integrations must be reimplemented with native Linux equivalents.
 
 ## Milestone 0 — Project and compatibility contract
 
@@ -11,52 +11,56 @@ The product goal is a Linux implementation of Plash's user-visible live-wallpape
 
 ## Milestone 1 — Visible wallpaper prototype
 
-- [x] Launch a WebKitGTK view in a full-screen Wayland background layer.
-- [x] Accept an initial URL on the command line.
-- [ ] Verify compilation and runtime on Arch Linux with GNOME/Mutter plus a layer-shell-capable compositor.
+- [x] Implement a full-output Wayland background layer with a WebKitGTK view (not yet build-verified).
+- [x] Accept one or more web URLs from the command line.
+- [x] Add opt-in timed switching between configured URLs.
+- [x] Reject unsupported URL schemes.
+- [ ] Verify compilation and runtime on Arch Linux with a layer-shell-capable compositor.
 - [ ] Add graceful errors for unsupported compositor/protocol and WebKit load failures.
 - [ ] Provide a safe quit/recovery shortcut and prevent the wallpaper from obscuring desktop controls.
 
 ## Milestone 2 — Plash core workflow
 
 - [ ] Native settings window and tray/background service.
-- [ ] Add, remove, reorder, enable and switch among multiple web sources.
-- [ ] Persist settings and restore wallpaper state after login.
+- [ ] Persist sources and active selection; add, remove, reorder and switch them interactively.
+- [ ] Restore wallpaper state after login.
 - [ ] Reload, navigate, zoom, user-agent and page load controls.
 - [ ] Web inspector/developer tools toggle.
-- [ ] Per-display assignment, scaling, positioning and independent refresh.
-- [ ] Interactive mode toggle: click-through wallpaper by default, temporarily interactive on request.
-- [ ] Remember per-site options and fail safely on invalid or unreachable URLs.
+- [ ] Choose a display and handle multi-monitor hotplug.
+- [ ] Interactive browsing mode toggle, click-through mode and navigation controls.
+- [ ] Per-site settings, custom CSS/JavaScript, opacity, transparency and invert colors.
+- [ ] Configurable reload interval, mute audio and safe permission controls.
+- [ ] Automatic battery-aware deactivation and image aspect-fill mode.
+- [ ] CLI/desktop automation actions and browser URL import/share handler.
 
 ## Milestone 3 — Linux desktop integration
 
-- [ ] Wayland layer-shell backend with tested GNOME/KDE/wlroots compatibility matrix.
+- [ ] Wayland layer-shell backend with tested compositor compatibility matrix.
 - [ ] X11 backend for desktops that do not support the layer-shell protocol.
 - [ ] Desktop autostart and session restoration.
 - [ ] Native desktop menu/actions, notifications and keyboard shortcuts.
-- [ ] Multi-monitor hotplug and resolution-change handling.
 - [ ] Accessibility, localization and high-DPI behavior.
 
-## Milestone 4 — Feature parity and robustness
+## Milestone 4 — Robustness and feature parity
 
-- [ ] Compare every Plash release feature against a tracked parity matrix.
-- [ ] Web content permissions controls and safe defaults for camera, microphone, location, popups and downloads.
-- [ ] Resource controls: pause, refresh throttling, memory visibility, network status.
+- [ ] Compare every feature in the public parity matrix and document platform gaps.
+- [ ] Resource controls: pause, refresh throttling, memory visibility and network status.
 - [ ] Crash recovery, process isolation, logging controls and diagnostics export.
 - [ ] UI and browser engine updates through distribution packages.
 
 ## Milestone 5 — Arch distribution quality
 
-- [ ] Maintained PKGBUILD with source integrity checks and reproducible package build.
+- [ ] Generate and commit Cargo.lock; use locked builds.
+- [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
 - [ ] AUR release workflow and signed tags.
-- [ ] CI: formatting, clippy, unit tests, package metadata and build on supported Arch image.
-- [ ] Document install, upgrade, removal, troubleshooting, portal permissions and compositor limitations.
-- [ ] Release candidate acceptance on clean Arch GNOME Wayland and at least one additional compositor.
+- [ ] CI: formatting, clippy, unit tests and build on supported Arch image.
+- [ ] Document install, upgrade, removal, troubleshooting and compositor limitations.
+- [ ] Release candidate acceptance on clean Arch Wayland and at least one additional compositor.
 
 ## Technical constraints and risks
 
 - Wayland does not provide one universal protocol for placing arbitrary application windows behind desktop icons. Layer-shell is an extension, not a core Wayland feature; compositor support varies.
-- GNOME Shell/Mutter support for layer-shell is not generally guaranteed by default. The initial prototype must not claim GNOME compatibility until tested with the required extension or compositor support.
+- GNOME Shell/Mutter does not guarantee layer-shell support by default. Do not claim GNOME compatibility until tested with the needed support.
 - WebKitGTK availability and crate bindings can change with Arch rolling releases; package versions must be verified continuously.
 - X11 placement and input behavior differ from Wayland and require a separately tested backend.
-- Exact macOS feature parity is not achievable where Linux has no equivalent API; document each difference in the parity matrix.
+- Exact parity is constrained where Linux has no equivalent API; track each difference in the parity matrix.
