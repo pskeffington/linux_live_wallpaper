@@ -52,7 +52,7 @@ Replace `FEEDER_HOST` with the address of your Tar1090 host. The URL is added to
 ~/.local/bin/linux-live-wallpaper --list
 ```
 
-To open the interactive controller for the current session, run `bash scripts/garuda-deploy.sh run`. The login service runs without the controller. Manage it with:
+To open the interactive controller for the current session, run `bash scripts/garuda-deploy.sh run`. The helper stops the background service first, preventing two wallpaper surfaces from being created. Closing the interactive app leaves the service stopped until the next login. Manage it with:
 
 ```sh
 bash scripts/garuda-deploy.sh status
