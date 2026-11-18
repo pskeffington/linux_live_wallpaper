@@ -23,10 +23,11 @@ Confirm the current session is Wayland, then build and open a Tar1090 web root:
 ```sh
 test "${XDG_SESSION_TYPE:-}" = wayland
 cargo build --release --locked
-cargo run --release -- --url http://FEEDER_HOST:FEEDER_PORT/
+cargo run --release -- --list-monitors
+cargo run --release -- --url http://FEEDER_HOST:FEEDER_PORT/ --monitor 0
 ```
 
-Replace `FEEDER_HOST` and `FEEDER_PORT` with the address configured for your local receiver. The app should use the Tar1090 dashboard's web root, not its `data/aircraft.json` endpoint.
+Replace `FEEDER_HOST` and `FEEDER_PORT` with the address configured for your local receiver. Replace monitor index `0` with the index from `--list-monitors` if you want another display. The app should use the Tar1090 dashboard's web root, not its `data/aircraft.json` endpoint.
 
 For example, for a feeder with a root page at port 8504:
 
