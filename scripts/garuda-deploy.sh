@@ -4,16 +4,14 @@ set -euo pipefail
 app_name="linux-live-wallpaper"
 bin_dir="${HOME}/.local/bin"
 unit_dir="${HOME}/.config/systemd/user"
-autostart_dir="${HOME}/.config/autostart"
 unit_file="${unit_dir}/linux-live-wallpaper.service"
-desktop_file="${autostart_dir}/linux-live-wallpaper.desktop"
 binary="${bin_dir}/${app_name}"
 
 usage() {
   cat <<'EOF'
 Usage: scripts/garuda-deploy.sh <install|remove|run|status> [--url URL]
 
-install  Build and install the binary for this user, then enable its user service.
+install  Build and install the binary for this user, then enable its systemd user service.
 remove   Stop/disable the service and remove app files created by this script.
 run      Run the app in the current Wayland session with the native controller.
 status   Show the user service status.
@@ -64,7 +62,7 @@ case "$action" in
     cargo build --release --locked
     install -Dm755 "target/release/$app_name" "$binary"
     add_url
-    install -d "$unit_dir" "$autostart_dir"
+    install -d "$unit_dir"
     cat > "$unit_file" <<EOF
 [Unit]
 Description=Linux Live Wallpaper
@@ -79,16 +77,6 @@ RestartSec=3
 
 [Install]
 WantedBy=graphical-session.target
-EOF
-    cat > "$desktop_file" <<EOF
-[Desktop Entry]
-Type=Application
-Name=Linux Live Wallpaper
-Comment=Start the live wallpaper at desktop login
-Exec=$binary --background
-TryExec=$binary
-Terminal=false
-X-GNOME-Autostart-enabled=true
 EOF
     systemctl --user daemon-reload
     systemctl --user enable --now linux-live-wallpaper.service
@@ -108,7 +96,7 @@ EOF
     systemctl --user disable --now linux-live-wallpaper.service 2>/dev/null || true
     rm -f "$unit_file" "$desktop_file" "$binary"
     systemctl --user daemon-reload 2>/dev/null || true
-    printf 'Removed the user service, desktop autostart entry, and installed binary. Saved sources are preserved.\n'
+    printf 'Removed the user service and installed binary. Saved sources are preserved.\n'
     ;;
   *)
     usage >&2
