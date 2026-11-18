@@ -42,7 +42,7 @@ A native controller window opens with Previous, Next, Reload, browsing-mode, bro
 Per-run page options include custom CSS and JavaScript, color inversion, surface opacity, page zoom, a custom user-agent, and a host-scoped exception for self-signed TLS certificates:
 
 ```sh
-cargo run --release -- --url https://example.com --css-file wallpaper.css --js-file wallpaper.js --invert-colors --opacity 0.85 --zoom 1.15 --user-agent 'Mozilla/5.0' --allow-self-signed dashboard.example --transparent-background --deactivate-on-battery
+cargo run --release -- --url https://dashboard.example --css-file wallpaper.css --js-file wallpaper.js --invert-colors --opacity 0.85 --zoom 1.15 --user-agent 'Mozilla/5.0' --allow-self-signed dashboard.example --transparent-background --deactivate-on-battery
 ```
 
 Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. `--allow-self-signed HOST` is opt-in and accepts only unknown-certificate-authority errors for that host; hostname mismatches, expired certificates, and other TLS errors still fail. Standalone image URLs are styled to fill the wallpaper viewport while preserving aspect ratio. Opacity must be between 0.0 and 1.0.
