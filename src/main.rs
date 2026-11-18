@@ -315,6 +315,21 @@ fn save_sources(path: &PathBuf, sources: &[String]) -> Result<()> {
     fs::write(path, contents).with_context(|| format!("could not write {}", path.display()))
 }
 
+fn load_browsing_mode(path: &Path) -> Result<bool> {
+    match fs::read_to_string(path) {
+        Ok(value) => Ok(value.trim() == "enabled"),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(error).with_context(|| format!("could not read {}", path.display())),
+    }
+}
+
+fn save_browsing_mode(path: &Path, enabled: bool) -> Result<()> {
+    let parent = path.parent().context("browsing-mode path must have a parent directory")?;
+    fs::create_dir_all(parent).with_context(|| format!("could not create {}", parent.display()))?;
+    fs::write(path, if enabled { "enabled\n" } else { "disabled\n" })
+        .with_context(|| format!("could not write {}", path.display()))
+}
+
 fn load_active_source_index(path: &Path, sources: &[String]) -> Result<usize> {
     let saved_source = match fs::read_to_string(path) {
         Ok(source) => source,
@@ -578,6 +593,13 @@ fn build_wallpaper(
     let active_source_path = Rc::new(
         restore_saved_source.then(|| config_path.with_file_name("active-source.txt")),
     );
+    let browsing_mode_path = Rc::new(
+        restore_saved_source.then(|| config_path.with_file_name("browsing-mode.txt")),
+    );
+    let initial_browsing_mode = match browsing_mode_path.as_ref().as_deref() {
+        Some(path) => load_browsing_mode(path)?,
+        None => false,
+    };
     let initial_index = match active_source_path.as_ref().as_deref() {
         Some(path) => load_active_source_index(path, urls)?,
         None => 0,
@@ -1004,9 +1026,20 @@ fn build_wallpaper(
         webview.connect_load_changed(move |view, event| {
             back_button.set_sensitive(view.can_go_back());
             forward_button.set_sensitive(view.can_go_forward());
-            if event == webkit::LoadEvent::Started {
-                let uri = view.uri().map(|uri| uri.to_string()).unwrap_or_default();
-                status.set_text(&format!("Loading {uri}"));
+            match event {
+                webkit::LoadEvent::Started => {
+                    let uri = view.uri().map(|uri| uri.to_string()).unwrap_or_default();
+                    status.set_text(&format!("Loading {uri}"));
+                }
+                webkit::LoadEvent::Committed => {
+                    let uri = view.uri().map(|uri| uri.to_string()).unwrap_or_default();
+                    status.set_text(&format!("Loaded response from {uri}"));
+                }
+                webkit::LoadEvent::Finished => {
+                    let uri = view.uri().map(|uri| uri.to_string()).unwrap_or_default();
+                    status.set_text(&uri);
+                }
+                _ => {}
             }
         });
     }
@@ -1276,13 +1309,26 @@ fn build_wallpaper(
         });
     }
 
-    let browsing = Rc::new(Cell::new(false));
+    let browsing = Rc::new(Cell::new(initial_browsing_mode));
+    set_wallpaper_interactive(&window, initial_browsing_mode);
+    browse_button.set_label(if initial_browsing_mode {
+        "Disable browsing mode"
+    } else {
+        "Enable browsing mode"
+    });
     {
         let wallpaper = window.clone();
         let browsing = browsing.clone();
+        let browsing_mode_path = browsing_mode_path.clone();
+        let status = status.clone();
         browse_button.connect_clicked(move |button| {
             let enabled = !browsing.get();
             browsing.set(enabled);
+            if let Some(path) = browsing_mode_path.as_ref().as_deref() {
+                if let Err(error) = save_browsing_mode(path, enabled) {
+                    status.set_text(&format!("Changed browsing mode, but could not save it: {error:#}"));
+                }
+            }
             set_wallpaper_interactive(&wallpaper, enabled);
             button.set_label(if enabled {
                 "Disable browsing mode"
@@ -1320,6 +1366,7 @@ fn build_wallpaper(
         let wallpaper = window.clone();
         let browsing = browsing.clone();
         let browse_button = browse_button.clone();
+        let browsing_mode_path = browsing_mode_path.clone();
         let active_source_path = active_source_path.clone();
         let content_manager = content_manager.clone();
         let base_css = base_css.clone();
@@ -1356,6 +1403,11 @@ fn build_wallpaper(
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
                 browsing.set(enabled);
+                if let Some(path) = browsing_mode_path.as_ref().as_deref() {
+                    if let Err(error) = save_browsing_mode(path, enabled) {
+                        status.set_text(&format!("Changed browsing mode, but could not save it: {error:#}"));
+                    }
+                }
                 set_wallpaper_interactive(&wallpaper, enabled);
                 browse_button.set_label(if enabled {
                     "Disable browsing mode"
