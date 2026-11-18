@@ -442,6 +442,19 @@ fn build_wallpaper(
         bail!("at least one wallpaper URL is required");
     }
 
+    let display = gtk::gdk::Display::default().context("no GDK display is available")?;
+    let monitor_index = monitor_index.unwrap_or(0);
+    let monitor = display
+        .monitors()
+        .item(monitor_index)
+        .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())
+        .with_context(|| format!("display index {monitor_index} does not exist"))?;
+    let geometry = monitor.geometry();
+    let screen_dimensions = (
+        geometry.width().max(1) as u32,
+        geometry.height().max(1) as u32,
+    );
+
     let settings_path = config_path.with_file_name("settings.tsv");
     let mut loaded_settings = load_source_settings(&settings_path, opacity)?;
     for address in urls {
@@ -528,7 +541,8 @@ fn build_wallpaper(
         webview.set_background_color(&gtk::gdk::RGBA::new(0.0, 0.0, 0.0, 0.0));
     }
     webview.set_is_muted(true);
-    webview.load_uri(&urls[0]);
+    let initial_url = resolve_url(&urls[0], screen_dimensions);
+    webview.load_uri(&initial_url);
 
     let sources = Rc::new(RefCell::new(urls.to_vec()));
     let current = Rc::new(Cell::new(0usize));
@@ -554,15 +568,7 @@ fn build_wallpaper(
     }
 
     window.init_layer_shell();
-    if let Some(index) = monitor_index {
-        let display = gtk::gdk::Display::default().context("no GDK display is available")?;
-        let monitor = display
-            .monitors()
-            .item(index)
-            .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())
-            .with_context(|| format!("display index {index} does not exist"))?;
-        window.set_monitor(&monitor);
-    }
+    window.set_monitor(&monitor);
     window.set_namespace("linux-live-wallpaper");
     window.set_layer(Layer::Background);
     window.set_anchor(Edge::Top, true);
@@ -662,7 +668,7 @@ fn build_wallpaper(
             let index = (current.get() + list.len() - 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
         });
     }
     {
@@ -679,7 +685,7 @@ fn build_wallpaper(
             let index = (current.get() + 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
         });
     }
     {
@@ -808,7 +814,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(sources.borrow().len() - 1);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
             entry.set_text("");
         });
     }
@@ -841,7 +847,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(current.get().min(sources.borrow().len() - 1));
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
         });
     }
     for (button, direction) in [(&move_up_button, -1isize), (&move_down_button, 1isize)] {
@@ -868,7 +874,7 @@ fn build_wallpaper(
             }
             *sources.borrow_mut() = updated;
             current.set(target as usize);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
         });
     }
 
@@ -927,14 +933,14 @@ fn build_wallpaper(
                 let index = (current.get() + list.len() - 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
                 let list = sources.borrow();
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
@@ -968,7 +974,7 @@ fn build_wallpaper(
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions);
             }
             gtk::glib::ControlFlow::Continue
         });
@@ -1045,6 +1051,7 @@ fn load_current(
     zoom_entry: &gtk::Entry,
     opacity_entry: &gtk::Entry,
     reload_entry: &gtk::Entry,
+    screen_dimensions: (u32, u32),
 ) {
     let list = sources.borrow();
     if list.is_empty() {
@@ -1059,13 +1066,20 @@ fn load_current(
         opacity: 1.0,
         reload_seconds: 0,
     });
-    view.load_uri(&address);
+    let resolved_address = resolve_url(&address, screen_dimensions);
+    view.load_uri(&resolved_address);
     view.set_zoom_level(setting.zoom);
     view.set_opacity(setting.opacity);
     status.set_text(&address);
     zoom_entry.set_text(&setting.zoom.to_string());
     opacity_entry.set_text(&setting.opacity.to_string());
     reload_entry.set_text(&setting.reload_seconds.to_string());
+}
+
+fn resolve_url(address: &str, dimensions: (u32, u32)) -> String {
+    address
+        .replace("[[screenWidth]]", &dimensions.0.to_string())
+        .replace("[[screenHeight]]", &dimensions.1.to_string())
 }
 
 fn set_wallpaper_interactive(window: &ApplicationWindow, enabled: bool) {
