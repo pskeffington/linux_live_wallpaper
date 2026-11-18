@@ -1,6 +1,13 @@
 # Garuda Dr460nized deployment
 
-This guide targets Garuda Dr460nized's KDE Plasma desktop on Wayland. The application uses GTK 4, WebKitGTK 6, and GTK Layer Shell to place web content as a wallpaper. KWin must expose the Wayland layer-shell protocol; the current prototype has not yet been runtime-validated on a Garuda machine. X11 is unsupported.
+This guide targets Garuda Dr460nized's KDE Plasma desktop on Wayland. The application uses GTK 4, WebKitGTK 6, and GTK Layer Shell to place web content as a wallpaper. KWin must expose the Wayland layer-shell protocol; the tested Garuda session advertises it, but wallpaper placement and rendering remain unverified. X11 is unsupported.
+
+## Validation snapshot — 2026-11-18
+
+- **PASS — Arch build:** GitHub Actions run [44283177523](https://github.com/pskeffington/linux_live_wallpaper/actions/runs/44283177523) completed `cargo build --release --locked` successfully on current Arch packages at source revision `71b7ced`.
+- **PASS — Wayland protocol:** `wayland-info` exited 0 on the Garuda Dragonized session and listed `zwlr_layer_shell_v1` (version 5).
+- **PASS — Tar1090 endpoint:** `curl -sSI --max-time 8 http://172.20.30.64:8504/` exited 0 and returned HTTP 200.
+- **BLOCKED — local runtime:** GTK 4.24.1 is installed, but `webkitgtk-6.0` and `gtk4-layer-shell` are absent. The dependency installer needs interactive sudo authorization before the app can be built and displayed here. Layer placement, Tar1090 rendering, and session startup remain unverified.
 
 ## Prepare Garuda
 
