@@ -35,6 +35,22 @@ struct Args {
     /// Seconds between automatic switches. Zero disables rotation.
     #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u32).range(0..))]
     rotate_seconds: u32,
+
+    /// Inject CSS from a file into each loaded page.
+    #[arg(long, value_name = "PATH")]
+    css_file: Option<PathBuf>,
+
+    /// Inject JavaScript from a file into each loaded page at document start.
+    #[arg(long, value_name = "PATH")]
+    js_file: Option<PathBuf>,
+
+    /// Invert page colors while retaining the original appearance of images and video.
+    #[arg(long)]
+    invert_colors: bool,
+
+    /// Opacity for the complete wallpaper surface, from 0.0 (transparent) to 1.0 (opaque).
+    #[arg(long, default_value = "1.0", value_name = "0.0..1.0")]
+    opacity: String,
 }
 
 fn main() -> Result<()> {
@@ -81,16 +97,29 @@ fn main() -> Result<()> {
         args.urls
     };
 
-    let invalid: Vec<_> = urls.iter().filter(|url| !is_supported_url(url)).collect();
-    if !invalid.is_empty() {
+    if urls.iter().any(|url| !is_supported_url(url)) {
         bail!("only http://, https:// and file:// wallpaper URLs are supported");
     }
+
+    let opacity = parse_opacity(&args.opacity)?;
+    let custom_css = read_optional_file(args.css_file.as_ref())?;
+    let custom_js = read_optional_file(args.js_file.as_ref())?;
+    let rotate_seconds = args.rotate_seconds;
+    let invert_colors = args.invert_colors;
 
     let app = Application::builder()
         .application_id("io.github.pskeffington.LinuxLiveWallpaper")
         .build();
     app.connect_activate(move |app| {
-        if let Err(error) = build_wallpaper(app, &urls, args.rotate_seconds) {
+        if let Err(error) = build_wallpaper(
+            app,
+            &urls,
+            rotate_seconds,
+            opacity,
+            invert_colors,
+            &custom_css,
+            &custom_js,
+        ) {
             eprintln!("Could not create wallpaper surface: {error:#}");
         }
     });
@@ -138,6 +167,21 @@ fn save_sources(path: &PathBuf, sources: &[String]) -> Result<()> {
     fs::write(path, contents).with_context(|| format!("could not write {}", path.display()))
 }
 
+fn read_optional_file(path: Option<&PathBuf>) -> Result<Option<String>> {
+    path.map(|path| {
+        fs::read_to_string(path).with_context(|| format!("could not read {}", path.display()))
+    })
+    .transpose()
+}
+
+fn parse_opacity(value: &str) -> Result<f64> {
+    let opacity: f64 = value.parse().context("opacity must be a number from 0.0 to 1.0")?;
+    if !opacity.is_finite() || !(0.0..=1.0).contains(&opacity) {
+        bail!("opacity must be between 0.0 and 1.0");
+    }
+    Ok(opacity)
+}
+
 fn is_supported_url(address: &str) -> bool {
     let Some((scheme, remainder)) = address.split_once("://") else {
         return false;
@@ -147,12 +191,50 @@ fn is_supported_url(address: &str) -> bool {
         && matches!(scheme.to_ascii_lowercase().as_str(), "http" | "https" | "file")
 }
 
-fn build_wallpaper(app: &Application, urls: &[String], rotate_seconds: u32) -> Result<()> {
+fn build_wallpaper(
+    app: &Application,
+    urls: &[String],
+    rotate_seconds: u32,
+    opacity: f64,
+    invert_colors: bool,
+    custom_css: &Option<String>,
+    custom_js: &Option<String>,
+) -> Result<()> {
     if urls.is_empty() {
         bail!("at least one wallpaper URL is required");
     }
 
-    let webview = webkit::WebView::new();
+    let content_manager = webkit::UserContentManager::new();
+    let mut css = custom_css.clone().unwrap_or_default();
+    if invert_colors {
+        css.push_str(
+            "\nhtml { filter: invert(1) hue-rotate(180deg) !important; }\n             img, video, canvas, picture, svg image { filter: invert(1) hue-rotate(180deg) !important; }\n",
+        );
+    }
+    if !css.is_empty() {
+        let stylesheet = webkit::UserStyleSheet::new(
+            &css,
+            webkit::UserContentInjectedFrames::TopFrame,
+            webkit::UserStyleLevel::User,
+            &[],
+            &[],
+        );
+        content_manager.add_style_sheet(&stylesheet);
+    }
+    if let Some(script) = custom_js {
+        let script = webkit::UserScript::new(
+            script,
+            webkit::UserContentInjectedFrames::TopFrame,
+            webkit::UserScriptInjectionTime::Start,
+            &[],
+            &[],
+        );
+        content_manager.add_script(&script);
+    }
+
+    let webview = webkit::WebView::with_user_content_manager(&content_manager);
+    webview.set_opacity(opacity);
+    webview.set_is_muted(true);
     webview.load_uri(&urls[0]);
 
     if rotate_seconds > 0 && urls.len() > 1 {
@@ -188,7 +270,7 @@ fn build_wallpaper(app: &Application, urls: &[String], rotate_seconds: u32) -> R
 
 #[cfg(test)]
 mod tests {
-    use super::is_supported_url;
+    use super::{is_supported_url, parse_opacity};
 
     #[test]
     fn accepts_http_https_and_file_urls() {
@@ -204,5 +286,15 @@ mod tests {
         assert!(!is_supported_url("https://"));
         assert!(!is_supported_url("data://text/html,hello"));
         assert!(!is_supported_url("https://example.com/a b"));
+    }
+
+    #[test]
+    fn validates_opacity_range() {
+        assert_eq!(parse_opacity("0.5").unwrap(), 0.5);
+        assert_eq!(parse_opacity("0").unwrap(), 0.0);
+        assert_eq!(parse_opacity("1").unwrap(), 1.0);
+        assert!(parse_opacity("-0.1").is_err());
+        assert!(parse_opacity("1.1").is_err());
+        assert!(parse_opacity("NaN").is_err());
     }
 }
