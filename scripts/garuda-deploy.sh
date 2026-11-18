@@ -60,8 +60,10 @@ case "$action" in
     command -v cargo >/dev/null || die "Install Rust/Cargo and system dependencies first: bash scripts/install-arch-deps.sh"
     command -v systemctl >/dev/null || die "systemctl is required for the user service."
     cargo build --release --locked
+    if [[ -n "$url" ]]; then
+      cargo run --quiet -- --add "$url"
+    fi
     install -Dm755 "target/release/$app_name" "$binary"
-    add_url
     install -d "$unit_dir"
     cat > "$unit_file" <<EOF
 [Unit]
