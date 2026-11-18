@@ -64,7 +64,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add an Arch dependency installer and Garuda Dr460nized deployment guide.
 - [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
 - [ ] AUR release workflow and signed tags.
-- [ ] CI: formatting, clippy, unit tests and build on supported Arch image.
+- [ ] CI: formatting, clippy, unit tests and verified build on supported Arch image.
+- [x] Add an Arch package build workflow; the workflow result is not yet confirmed.
 - [ ] Package install, upgrade, removal, troubleshooting and compositor limitations for a release; Garuda helper instructions now cover per-user deploy/remove.
 - [ ] Release candidate acceptance on clean Arch Wayland and at least one additional compositor.
 
