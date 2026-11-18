@@ -33,7 +33,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Reload, navigate, zoom and web inspector/developer tools controls.
 - [x] List available displays and select one by its zero-based GDK monitor index.\n- [ ] Persist per-source display assignments and handle multi-monitor hotplug.
 - [ ] Interactive browsing mode toggle, click-through mode and navigation controls.
-- [ ] Add the remaining items in the public parity matrix, including display selection, battery-aware behavior and image aspect-fill.
+- [x] Add opt-in battery-aware hiding based on Linux power-supply status.\n- [ ] Add remaining parity items, including image aspect-fill and richer power-management integration.
 
 ## Milestone 3 — Linux desktop integration
 
