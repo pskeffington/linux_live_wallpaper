@@ -14,6 +14,7 @@ use webkit::prelude::*;
 #[derive(Clone, Copy, Debug)]
 struct SourceSettings {
     zoom: f64,
+    opacity: f64,
     reload_seconds: u32,
 }
 
@@ -266,7 +267,10 @@ fn save_sources(path: &PathBuf, sources: &[String]) -> Result<()> {
     fs::write(path, contents).with_context(|| format!("could not write {}", path.display()))
 }
 
-fn load_source_settings(path: &PathBuf) -> Result<HashMap<String, SourceSettings>> {
+fn load_source_settings(
+    path: &PathBuf,
+    default_opacity: f64,
+) -> Result<HashMap<String, SourceSettings>> {
     let contents = match fs::read_to_string(path) {
         Ok(contents) => contents,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(HashMap::new()),
@@ -277,7 +281,7 @@ fn load_source_settings(path: &PathBuf) -> Result<HashMap<String, SourceSettings
     let mut settings = HashMap::new();
     for (line_number, line) in contents.lines().enumerate() {
         let fields: Vec<_> = line.split('\t').collect();
-        if fields.len() != 3 {
+        if fields.len() != 3 && fields.len() != 4 {
             bail!("invalid source settings at {}:{}", path.display(), line_number + 1);
         }
         let url = decode_hex(fields[0]).with_context(|| {
@@ -286,10 +290,22 @@ fn load_source_settings(path: &PathBuf) -> Result<HashMap<String, SourceSettings
         let zoom = parse_zoom(fields[1]).with_context(|| {
             format!("invalid zoom setting at {}:{}", path.display(), line_number + 1)
         })?;
-        let reload_seconds = fields[2].parse::<u32>().with_context(|| {
+        let (opacity, reload_field) = if fields.len() == 4 {
+            (parse_opacity(fields[2])?, fields[3])
+        } else {
+            (default_opacity, fields[2])
+        };
+        let reload_seconds = reload_field.parse::<u32>().with_context(|| {
             format!("invalid reload interval at {}:{}", path.display(), line_number + 1)
         })?;
-        settings.insert(url, SourceSettings { zoom, reload_seconds });
+        settings.insert(
+            url,
+            SourceSettings {
+                zoom,
+                opacity,
+                reload_seconds,
+            },
+        );
     }
     Ok(settings)
 }
@@ -306,9 +322,10 @@ fn save_source_settings(path: &PathBuf, settings: &HashMap<String, SourceSetting
     for url in urls {
         let setting = settings[url];
         contents.push_str(&format!(
-            "{}\t{}\t{}\n",
+            "{}\t{}\t{}\t{}\n",
             encode_hex(url.as_bytes()),
             setting.zoom,
+            setting.opacity,
             setting.reload_seconds,
         ));
     }
@@ -398,10 +415,11 @@ fn build_wallpaper(
     }
 
     let settings_path = config_path.with_file_name("settings.tsv");
-    let mut loaded_settings = load_source_settings(&settings_path)?;
+    let mut loaded_settings = load_source_settings(&settings_path, opacity)?;
     for address in urls {
         loaded_settings.entry(address.clone()).or_insert(SourceSettings {
             zoom,
+            opacity,
             reload_seconds,
         });
     }
@@ -443,7 +461,7 @@ fn build_wallpaper(
         .settings(&settings)
         .user_content_manager(&content_manager)
         .build();
-    webview.set_opacity(opacity);
+    webview.set_opacity(source_settings.borrow()[&urls[0]].opacity);
     webview.set_zoom_level(source_settings.borrow()[&urls[0]].zoom);
     if transparent_background {
         webview.set_background_color(&gtk::gdk::RGBA::new(0.0, 0.0, 0.0, 0.0));
@@ -519,11 +537,15 @@ fn build_wallpaper(
     let zoom_entry = gtk::Entry::new();
     zoom_entry.set_placeholder_text(Some("Zoom (0.25–5.0)"));
     zoom_entry.set_text(&source_settings.borrow()[&sources.borrow()[0]].zoom.to_string());
+    let opacity_entry = gtk::Entry::new();
+    opacity_entry.set_placeholder_text(Some("Opacity (0.0–1.0)"));
+    opacity_entry.set_text(&source_settings.borrow()[&sources.borrow()[0]].opacity.to_string());
     let reload_entry = gtk::Entry::new();
     reload_entry.set_placeholder_text(Some("Reload seconds (0 disables)"));
     reload_entry.set_text(&source_settings.borrow()[&sources.borrow()[0]].reload_seconds.to_string());
     let save_settings_button = gtk::Button::with_label("Save page settings");
     page_settings.append(&zoom_entry);
+    page_settings.append(&opacity_entry);
     page_settings.append(&reload_entry);
     controls.append(&page_settings);
     controls.append(&save_settings_button);
@@ -564,12 +586,13 @@ fn build_wallpaper(
         let settings = source_settings.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         previous_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + list.len() - 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
         });
     }
     {
@@ -580,12 +603,13 @@ fn build_wallpaper(
         let settings = source_settings.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         next_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
         });
     }
     {
@@ -597,8 +621,16 @@ fn build_wallpaper(
         let status = status.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         save_settings_button.connect_clicked(move |_| {
             let parsed_zoom = match parse_zoom(zoom_entry.text().trim()) {
+                Ok(value) => value,
+                Err(error) => {
+                    status.set_text(&format!("{error:#}"));
+                    return;
+                }
+            };
+            let parsed_opacity = match parse_opacity(opacity_entry.text().trim()) {
                 Ok(value) => value,
                 Err(error) => {
                     status.set_text(&format!("{error:#}"));
@@ -619,6 +651,7 @@ fn build_wallpaper(
                 address,
                 SourceSettings {
                     zoom: parsed_zoom,
+                    opacity: parsed_opacity,
                     reload_seconds: parsed_reload,
                 },
             );
@@ -627,6 +660,7 @@ fn build_wallpaper(
                 return;
             }
             view.set_zoom_level(parsed_zoom);
+            view.set_opacity(parsed_opacity);
             status.set_text("Saved settings for this page.");
         });
     }
@@ -647,6 +681,7 @@ fn build_wallpaper(
         let settings_path = settings_path.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         add_button.connect_clicked(move |_| {
             let address = entry.text().trim().to_owned();
             if !is_supported_url(&address) {
@@ -666,13 +701,20 @@ fn build_wallpaper(
             *sources.borrow_mut() = updated;
             settings
                 .borrow_mut()
-                .insert(address, SourceSettings { zoom, reload_seconds });
+                .insert(
+                    address,
+                    SourceSettings {
+                        zoom,
+                        opacity,
+                        reload_seconds,
+                    },
+                );
             if let Err(error) = save_source_settings(&settings_path, &settings.borrow()) {
                 status.set_text(&format!("Could not save page settings: {error}"));
                 return;
             }
             current.set(sources.borrow().len() - 1);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
             entry.set_text("");
         });
     }
@@ -686,6 +728,7 @@ fn build_wallpaper(
         let settings_path = settings_path.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         remove_button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             if updated.len() <= 1 {
@@ -704,7 +747,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(current.get().min(sources.borrow().len() - 1));
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
         });
     }
     for (button, direction) in [(&move_up_button, -1isize), (&move_down_button, 1isize)] {
@@ -716,6 +759,7 @@ fn build_wallpaper(
         let settings = source_settings.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             let index = current.get();
@@ -730,7 +774,7 @@ fn build_wallpaper(
             }
             *sources.borrow_mut() = updated;
             current.set(target as usize);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
         });
     }
 
@@ -774,6 +818,7 @@ fn build_wallpaper(
         let settings = source_settings.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         let wallpaper = window.clone();
         let browsing = browsing.clone();
         let browse_button = browse_button.clone();
@@ -788,14 +833,14 @@ fn build_wallpaper(
                 let index = (current.get() + list.len() - 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
                 let list = sources.borrow();
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
@@ -822,13 +867,14 @@ fn build_wallpaper(
         let settings = source_settings.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
         gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
             let list = sources.borrow();
             if list.len() > 1 {
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &reload_entry);
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry);
             }
             gtk::glib::ControlFlow::Continue
         });
@@ -903,6 +949,7 @@ fn load_current(
     status: &gtk::Label,
     settings: &RefCell<HashMap<String, SourceSettings>>,
     zoom_entry: &gtk::Entry,
+    opacity_entry: &gtk::Entry,
     reload_entry: &gtk::Entry,
 ) {
     let list = sources.borrow();
@@ -915,12 +962,15 @@ fn load_current(
     drop(list);
     let setting = settings.borrow().get(&address).copied().unwrap_or(SourceSettings {
         zoom: 1.0,
+        opacity: 1.0,
         reload_seconds: 0,
     });
     view.load_uri(&address);
     view.set_zoom_level(setting.zoom);
+    view.set_opacity(setting.opacity);
     status.set_text(&address);
     zoom_entry.set_text(&setting.zoom.to_string());
+    opacity_entry.set_text(&setting.opacity.to_string());
     reload_entry.set_text(&setting.reload_seconds.to_string());
 }
 
