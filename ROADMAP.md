@@ -23,6 +23,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Garuda deployment helper checks the active compositor for `zwlr_layer_shell_v1` and reports the required backend when absent.
 - [x] Report WebKit load failures in the controller and service logs while retaining WebKit's stock error page.
 - [ ] Provide a safe quit/recovery shortcut and prevent the wallpaper from obscuring desktop controls.
+- [x] Add a controller switch to hide/restore the wallpaper surface while respecting battery deactivation; battery/compositor runtime behavior remains to verify.
 
 ## Milestone 2 — Plash core workflow
 

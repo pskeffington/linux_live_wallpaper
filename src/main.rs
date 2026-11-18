@@ -706,6 +706,7 @@ fn build_wallpaper(
     let sources = Rc::new(RefCell::new(urls.to_vec()));
     let current = Rc::new(Cell::new(initial_index));
     let browsing = Rc::new(Cell::new(initial_browsing_mode));
+    let wallpaper_enabled = Rc::new(Cell::new(true));
 
     let window = ApplicationWindow::builder()
         .application(app)
@@ -750,6 +751,19 @@ fn build_wallpaper(
     controls.set_margin_start(12);
     controls.set_margin_end(12);
     controls.append(&status);
+
+    let visibility_button = gtk::CheckButton::with_label("Show wallpaper");
+    visibility_button.set_active(true);
+    controls.append(&visibility_button);
+    {
+        let wallpaper = window.clone();
+        let enabled = wallpaper_enabled.clone();
+        visibility_button.connect_toggled(move |button| {
+            let show = button.is_active();
+            enabled.set(show);
+            wallpaper.set_visible(show && (!deactivate_on_battery || !is_on_battery()));
+        });
+    }
 
     let navigation = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let previous_button = gtk::Button::with_label("Previous");
@@ -1631,11 +1645,12 @@ fn build_wallpaper(
     if deactivate_on_battery {
         let wallpaper_window = window.clone();
         let battery_controls_window = controls_window.clone();
+        let wallpaper_enabled = wallpaper_enabled.clone();
         gtk::glib::timeout_add_seconds_local(30, move || {
-            let visible = !is_on_battery();
-            wallpaper_window.set_visible(visible);
+            let on_battery = is_on_battery();
+            wallpaper_window.set_visible(wallpaper_enabled.get() && !on_battery);
             if !background {
-                battery_controls_window.set_visible(visible);
+                battery_controls_window.set_visible(!on_battery);
             }
             gtk::glib::ControlFlow::Continue
         });
