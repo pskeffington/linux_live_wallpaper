@@ -16,6 +16,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Choose display | Monitor picker and per-source assignment | CLI display listing and launch-time `--monitor INDEX`; no saved assignment or settings UI |
 | Invert colors | Optional injected stylesheet/filter | Launch-time `--invert-colors` |
 | Custom CSS and JavaScript | Explicit per-source customization fields | Launch-time files supply defaults; controller editors save CSS and JavaScript per source and apply them on page switches |
+| Custom user-agent | Per-source HTTP User-Agent override | Launch-time `--user-agent` supplies the default; the controller saves a per-source override and applies it on the next load |
 | Opacity | Surface opacity where compositor supports it | Controller saves opacity per source; `--opacity` supplies the default for sources without saved settings |
 | Transparent background | Web view transparency where supported | Launch-time `--transparent-background`; actual alpha rendering depends on compositor support |
 | Deactivate on battery | Power state integration, with manual override | Opt-in `--deactivate-on-battery` polls Linux battery status every 30 seconds and hides the window while discharging |
