@@ -31,7 +31,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Start with saved sources or pass temporary sources explicitly.
 - [x] Persist per-source zoom, opacity, reload interval, custom CSS, custom JavaScript, and user-agent; other launch-wide options remain CLI-scoped.
 - [x] Native controller window with Previous/Next/Reload and browsing-mode toggle.
-- [ ] Full settings window and tray/background service.
+- [ ] Full settings window for page, audio, display, browser, and power preferences; optional tray/background service.
 - [x] Switch among sources with native Previous/Next controls.
 - [x] Add, remove and reorder sources from the native controller; the active saved source is restored by URL after restart.
 - [x] Add an opt-in Garuda user-level systemd service that starts saved sources at login; automatic enablement remains installer-driven.
@@ -43,7 +43,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Persist per-source GDK output connector assignments; move the wallpaper on source changes and fall back/reselect when monitors are removed or reconnected (runtime validation remains open).
 - [x] Click-through wallpaper surface with a native browsing-mode toggle and on-demand keyboard focus; expose Plash-compatible `is-plash-app` and `plash-is-browsing-mode` document classes.
 - [x] Add WebKit Back/Forward history controls to the native controller.
-- [x] Add two-point pinch zoom in browsing mode and save the resulting per-source zoom; touchscreen/touchpad runtime behavior remains to verify.
+- [x] Add a two-point pinch gesture in browsing mode and persist the resulting page zoom; touchscreen/touchpad runtime behavior remains to verify.
+- [ ] Implement separate focal-point pinch magnification, matching Plash's gesture behavior independently of page zoom.
 - [x] Remember browsing-mode preference for saved-source launches and report loading, committed-response, completion, and failure states; explicit `--url` sessions remain temporary.
 - [x] Add opt-in battery-aware hiding based on Linux power-supply status.
 - [x] Add CSS aspect-fill behavior for standalone image documents (pending WebKit runtime verification).
@@ -55,12 +56,17 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] X11 backend for desktops that do not support the layer-shell protocol.
 - [x] Add a Garuda user service for desktop session startup; broader desktop autostart support remains open.
 - [x] Add focused controller shortcuts for Previous/Next, Reload and browsing mode.
-- [ ] Add desktop-wide shortcuts, notifications and native actions.
+- [ ] Add desktop-wide shortcuts for reload, next, previous, random source, browsing mode, and app visibility.
+- [ ] Expose wallpaper actions through desktop automation (D-Bus or equivalent) and Linux shortcut tools.
+- [ ] Add notifications for source changes and load failures.
 - [ ] Accessibility, localization and high-DPI behavior.
 
 ## Milestone 4 — Robustness and feature parity
 
 - [ ] Compare every feature in the public parity matrix and document platform gaps.
+- [ ] Add explicit new-window link handling, including open-in-default-browser preference and a modifier-key route to open in the wallpaper view.
+- [ ] Add a browser-share action to import the current page URL.
+- [ ] Evaluate a Linux automation interface corresponding to Plash Scriptable.
 - [ ] Resource controls: pause, refresh throttling, memory visibility and network status.
 - [ ] Crash recovery, process isolation, logging controls and diagnostics export.
 - [ ] UI and browser engine updates through distribution packages.
