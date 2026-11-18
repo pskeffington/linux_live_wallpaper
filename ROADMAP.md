@@ -38,7 +38,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Configure launch-time page zoom and user-agent.
 - [x] Persist zoom, opacity, and automatic reload interval per source.
 - [x] List available displays and select one by its zero-based GDK monitor index.
-- [ ] Persist per-source display assignments and handle multi-monitor hotplug.
+- [x] Persist per-source GDK output connector assignments; move the wallpaper on source changes and fall back/reselect when monitors are removed or reconnected (runtime validation remains open).
 - [x] Click-through wallpaper surface with a native browsing-mode toggle and on-demand keyboard focus.
 - [x] Add WebKit Back/Forward history controls to the native controller.
 - [ ] Remember browsing preferences and add navigation-state affordances.
