@@ -72,6 +72,19 @@ done
 
 check_wayland() {
   [[ "${XDG_SESSION_TYPE:-}" == wayland ]] || die "Start this from a Garuda Wayland session (XDG_SESSION_TYPE=wayland)."
+  command -v wayland-info >/dev/null || die "wayland-info is missing; install dependencies with bash scripts/install-arch-deps.sh."
+  local protocols
+  protocols="$(wayland-info 2>/dev/null)" || die "Could not query the active Wayland compositor."
+  [[ "$protocols" == *zwlr_layer_shell_v1* ]] || die "This compositor does not advertise zwlr_layer_shell_v1; Linux Live Wallpaper needs a layer-shell-capable Wayland session."
+}
+
+check_native_deps() {
+  command -v pkg-config >/dev/null || die "pkg-config is missing; install dependencies with bash scripts/install-arch-deps.sh."
+  local missing=()
+  for package in gtk4 webkitgtk-6.0 gtk4-layer-shell; do
+    pkg-config --exists "$package" || missing+=("$package")
+  done
+  (( ${#missing[@]} == 0 )) || die "Missing native development/runtime packages: ${missing[*]}. Run bash scripts/install-arch-deps.sh."
 }
 
 add_url() {
@@ -82,7 +95,8 @@ add_url() {
 case "$action" in
   install)
     check_wayland
-    command -v cargo >/dev/null || die "Install Rust/Cargo and system dependencies first: bash scripts/install-arch-deps.sh"
+    check_native_deps
+    command -v cargo >/dev/null || die "Install Rust/Cargo first: bash scripts/install-arch-deps.sh"
     command -v systemctl >/dev/null || die "systemctl is required for the user service."
     cargo build --release --locked
     built_binary="target/release/$app_name"
@@ -144,6 +158,7 @@ EOF
     ;;
   run)
     check_wayland
+    check_native_deps
     [[ -x "$binary" ]] || die "Not installed; run scripts/garuda-deploy.sh install first."
     systemctl --user stop linux-live-wallpaper.service 2>/dev/null || true
     run_args=()
