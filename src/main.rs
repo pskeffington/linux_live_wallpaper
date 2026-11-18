@@ -1028,6 +1028,7 @@ fn build_wallpaper(
         let current = current.clone();
         let settings = source_settings.clone();
         let view = webview.clone();
+        let wallpaper_window = window.clone();
         let mut elapsed = 0u32;
         let mut last_index = current.get();
         gtk::glib::timeout_add_seconds_local(1, move || {
@@ -1049,7 +1050,7 @@ fn build_wallpaper(
             };
             if interval == 0 {
                 elapsed = 0;
-            } else {
+            } else if wallpaper_window.is_visible() {
                 elapsed = elapsed.saturating_add(1);
                 if elapsed >= interval {
                     view.reload();
