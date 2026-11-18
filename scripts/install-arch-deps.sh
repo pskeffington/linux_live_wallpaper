@@ -26,6 +26,11 @@ terminal when prompted.
 EOF
 }
 
+if (( $# > 1 )); then
+  usage >&2
+  exit 2
+fi
+
 dry_run=0
 case "${1-}" in
   "")
