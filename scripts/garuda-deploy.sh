@@ -61,20 +61,16 @@ case "$action" in
     command -v cargo >/dev/null || die "Install Rust/Cargo and system dependencies first: bash scripts/install-arch-deps.sh"
     command -v systemctl >/dev/null || die "systemctl is required for the user service."
     cargo build --release --locked
-    source_list="$HOME/.config/linux-live-wallpaper/sources.txt"
-    if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
-      source_list="$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt"
-    fi
+    built_binary="target/release/$app_name"
+    [[ -x "$built_binary" ]] || die "The release binary was not produced by cargo build."
     if [[ -n "$url" ]]; then
-      if [[ ! -x "target/release/$app_name" ]]; then
-        die "The release binary was not produced by cargo build."
-      fi
-      "target/release/$app_name" --add "$url"
+      "$built_binary" --add "$url"
     fi
-    if [[ ! -s "$source_list" ]]; then
+    sources="$("$built_binary" --list)"
+    if [[ -z "${sources//[[:space:]]/}" ]]; then
       die "No saved sources. Re-run with --url http://FEEDER_HOST:8504/ or add a source first."
     fi
-    install -Dm755 "target/release/$app_name" "$binary"
+    install -Dm755 "$built_binary" "$binary"
     install -d "$unit_dir"
     cat > "$unit_file" <<EOF
 [Unit]
