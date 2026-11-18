@@ -1,0 +1,20 @@
+pkgbase = linux-live-wallpaper-git
+	pkgdesc = Interactive web wallpapers for Wayland desktops
+	pkgver = 0.1.0.r0.g0000000
+	pkgrel = 1
+	url = https://github.com/pskeffington/linux_live_wallpaper
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	makedepends = cargo
+	makedepends = git
+	depends = gtk4
+	depends = webkitgtk-6.0
+	depends = gtk4-layer-shell
+	optdepends = wayland-utils: inspect the active compositor protocols
+	provides = linux-live-wallpaper
+	conflicts = linux-live-wallpaper
+	source = linux_live_wallpaper::git+https://github.com/pskeffington/linux_live_wallpaper.git#branch=main
+	sha256sums = SKIP
+
+pkgname = linux-live-wallpaper-git
