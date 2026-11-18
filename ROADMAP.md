@@ -26,7 +26,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Persist sources in a per-user text configuration file.
 - [x] Add, remove and list sources from the command line.
 - [x] Start with saved sources or pass temporary sources explicitly.
-- [ ] Save customization settings per source instead of using launch-wide options.
+- [ ] Persist all page customization per source; zoom and reload interval are implemented, while opacity, CSS, JavaScript, user-agent and other options remain launch-wide.
 - [x] Native controller window with Previous/Next/Reload and browsing-mode toggle.
 - [ ] Full settings window and tray/background service.
 - [x] Switch among sources with native Previous/Next controls.
@@ -34,6 +34,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add an opt-in Garuda user-level systemd service that starts saved sources at login; automatic enablement remains installer-driven.
 - [ ] Reload, navigation controls and web inspector/developer tools.
 - [x] Configure launch-time page zoom and user-agent.
+- [x] Persist zoom and automatic reload interval per source.
 - [x] List available displays and select one by its zero-based GDK monitor index.
 - [ ] Persist per-source display assignments and handle multi-monitor hotplug.
 - [x] Click-through wallpaper surface with a native browsing-mode toggle and on-demand keyboard focus.
