@@ -15,7 +15,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Multiple websites and switching | Source collection with active source | Persistent CLI and native controller add/remove/reorder, timed rotation, and Previous/Next controls; saved-source launches resume the last selected URL from `active-source.txt`, while explicit `--url` sessions remain temporary |
 | Choose display | Monitor picker and per-source assignment | CLI display listing and launch-time `--monitor INDEX`; no saved assignment or settings UI |
 | Invert colors | Optional injected stylesheet/filter | Launch-time `--invert-colors` |
-| Custom CSS and JavaScript | Explicit per-source customization fields | Launch-time files via `--css-file` and `--js-file`; not saved per source |
+| Custom CSS and JavaScript | Explicit per-source customization fields | Launch-time files supply defaults; controller editors save CSS and JavaScript per source and apply them on page switches |
 | Opacity | Surface opacity where compositor supports it | Controller saves opacity per source; `--opacity` supplies the default for sources without saved settings |
 | Transparent background | Web view transparency where supported | Launch-time `--transparent-background`; actual alpha rendering depends on compositor support |
 | Deactivate on battery | Power state integration, with manual override | Opt-in `--deactivate-on-battery` polls Linux battery status every 30 seconds and hides the window while discharging |
