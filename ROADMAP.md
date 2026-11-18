@@ -22,7 +22,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Runtime-test wallpaper placement and rendering on Arch/Garuda with a layer-shell-capable compositor.
 - [x] Garuda deployment helper checks the active compositor for `zwlr_layer_shell_v1` and reports the required backend when absent.
 - [x] Report WebKit load failures in the controller and service logs while retaining WebKit's stock error page.
-- [ ] Provide a safe quit/recovery shortcut and prevent the wallpaper from obscuring desktop controls.
+- [ ] Add and verify a safe quit/recovery shortcut from the controller.
+- [ ] Verify wallpaper placement does not obscure desktop controls on supported Garuda/KWin setups.
 
 ## Milestone 2 — Plash core workflow
 
