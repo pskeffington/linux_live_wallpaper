@@ -61,23 +61,28 @@ case "$action" in
     command -v cargo >/dev/null || die "Install Rust/Cargo and system dependencies first: bash scripts/install-arch-deps.sh"
     command -v systemctl >/dev/null || die "systemctl is required for the user service."
     cargo build --release --locked
-    install -Dm755 "target/release/$app_name" "$binary"
-    if [[ -n "$url" ]]; then
-      "$binary" --add "$url"
-    fi
     source_list="$HOME/.config/linux-live-wallpaper/sources.txt"
     if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
       source_list="$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt"
     fi
+    if [[ -n "$url" ]]; then
+      if [[ ! -x "target/release/$app_name" ]]; then
+        die "The release binary was not produced by cargo build."
+      fi
+      "target/release/$app_name" --add "$url"
+    fi
     if [[ ! -s "$source_list" ]]; then
       die "No saved sources. Re-run with --url http://FEEDER_HOST:8504/ or add a source first."
     fi
+    install -Dm755 "target/release/$app_name" "$binary"
     install -d "$unit_dir"
     cat > "$unit_file" <<EOF
 [Unit]
 Description=Linux Live Wallpaper
 After=graphical-session.target
 PartOf=graphical-session.target
+ConditionEnvironment=XDG_SESSION_TYPE=wayland
+ConditionPathExists=%t/wayland-*
 
 [Service]
 Type=simple
@@ -90,6 +95,16 @@ RestartSec=3
 WantedBy=graphical-session.target
 EOF
     systemctl --user daemon-reload
+    import_vars=(DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS)
+    import_args=()
+    for name in "${import_vars[@]}"; do
+      if [[ -n "${!name:-}" ]]; then
+        import_args+=("$name")
+      fi
+    done
+    if (( ${#import_args[@]} )); then
+      systemctl --user import-environment "${import_args[@]}"
+    fi
     if ! systemctl --user is-active --quiet graphical-session.target; then
       printf '%s\n' "The graphical-session.target is not active yet; enabling service for the next login."
       systemctl --user enable linux-live-wallpaper.service
