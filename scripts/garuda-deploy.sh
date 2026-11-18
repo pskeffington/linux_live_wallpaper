@@ -65,6 +65,9 @@ case "$action" in
     if [[ -n "$url" ]]; then
       "$binary" --add "$url"
     fi
+    if ! "$binary" --list | rg -q .; then
+      die "No saved sources. Re-run with --url http://FEEDER_HOST:8504/ or add a source first."
+    fi
     install -d "$unit_dir"
     cat > "$unit_file" <<EOF
 [Unit]
