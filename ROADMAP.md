@@ -17,7 +17,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add configurable interval-based page reload; pause elapsed time while the wallpaper surface is hidden (suspend pauses callbacks naturally).
 - [x] Reject unsupported URL schemes.
 - [x] Resolve `[[screenWidth]]` and `[[screenHeight]]` URL placeholders using monitor geometry and the GDK scale factor (fractional scaling/runtime behavior still needs verification).
-- [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request, muted audio, and host-scoped self-signed certificate trust.
+- [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request, muted-by-default audio with a persistent controller toggle, and host-scoped self-signed certificate trust.
 - [x] Compile against current Arch packages in the Arch Linux CI container (GitHub Actions run 44289735869, source `bfe792e`).
 - [ ] Runtime-test wallpaper placement and rendering on Arch/Garuda with a layer-shell-capable compositor.
 - [x] Garuda deployment helper checks the active compositor for `zwlr_layer_shell_v1` and reports the required backend when absent.
