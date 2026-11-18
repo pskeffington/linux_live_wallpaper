@@ -30,7 +30,7 @@ cargo run -- --list
 cargo run -- --remove https://news.example
 ```
 
-Start the wallpaper from saved sources or provide temporary sources directly. Repeat `--url` for each source:
+Add at least one source before starting from saved sources, or provide temporary sources directly. Repeat `--url` for each source:
 
 ```sh
 cargo run --release
