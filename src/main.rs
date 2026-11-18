@@ -617,16 +617,19 @@ fn build_wallpaper(
     }
     controls_window.add_controller(key_controller);
 
-    if rotate_seconds > 0 && sources.len() > 1 {
+    if rotate_seconds > 0 {
         let sources = sources.clone();
         let current = current.clone();
         let view = webview.clone();
         let status = status.clone();
         gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
-            let index = (current.get() + 1) % sources.len();
-            current.set(index);
-            view.load_uri(&sources[index]);
-            status.set_text(&sources[index]);
+            let list = sources.borrow();
+            if list.len() > 1 {
+                let index = (current.get() + 1) % list.len();
+                current.set(index);
+                view.load_uri(&list[index]);
+                status.set_text(&list[index]);
+            }
             gtk::glib::ControlFlow::Continue
         });
     }
