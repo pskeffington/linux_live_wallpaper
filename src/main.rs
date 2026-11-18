@@ -475,6 +475,50 @@ fn build_wallpaper(
         });
     }
 
+    let key_controller = gtk::EventControllerKey::new();
+    {
+        let view = webview.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let status = status.clone();
+        let wallpaper = window.clone();
+        let browsing = browsing.clone();
+        let browse_button = browse_button.clone();
+        key_controller.connect_key_pressed(move |_, key, _, modifiers| {
+            use gtk::gdk::{Key, ModifierType};
+
+            if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::r {
+                view.reload();
+                gtk::glib::Propagation::Stop
+            } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Left {
+                let index = (current.get() + sources.len() - 1) % sources.len();
+                current.set(index);
+                view.load_uri(&sources[index]);
+                status.set_text(&sources[index]);
+                gtk::glib::Propagation::Stop
+            } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
+                let index = (current.get() + 1) % sources.len();
+                current.set(index);
+                view.load_uri(&sources[index]);
+                status.set_text(&sources[index]);
+                gtk::glib::Propagation::Stop
+            } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
+                let enabled = !browsing.get();
+                browsing.set(enabled);
+                set_wallpaper_interactive(&wallpaper, enabled);
+                browse_button.set_label(if enabled {
+                    "Disable browsing mode"
+                } else {
+                    "Enable browsing mode"
+                });
+                gtk::glib::Propagation::Stop
+            } else {
+                gtk::glib::Propagation::Proceed
+            }
+        });
+    }
+    controls_window.add_controller(key_controller);
+
     if rotate_seconds > 0 && sources.len() > 1 {
         let sources = sources.clone();
         let current = current.clone();
