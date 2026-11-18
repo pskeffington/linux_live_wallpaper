@@ -1398,6 +1398,59 @@ fn build_wallpaper(
         });
     }
     {
+        let gesture = gtk::GestureZoom::new();
+        let base_zoom = Rc::new(Cell::new(webview.property::<f64>("zoom-level")));
+
+        {
+            let view = webview.clone();
+            let base_zoom = base_zoom.clone();
+            gesture.connect_begin(move |_, _| {
+                base_zoom.set(view.property::<f64>("zoom-level"));
+            });
+        }
+        {
+            let view = webview.clone();
+            let browsing = browsing.clone();
+            let base_zoom = base_zoom.clone();
+            let zoom_entry = zoom_entry.clone();
+            gesture.connect_scale_changed(move |_, scale| {
+                if !browsing.get() || !scale.is_finite() || scale <= 0.0 {
+                    return;
+                }
+                let zoom = (base_zoom.get() * scale).clamp(0.25, 5.0);
+                view.set_zoom_level(zoom);
+                zoom_entry.set_text(&zoom.to_string());
+            });
+        }
+        {
+            let view = webview.clone();
+            let settings = source_settings.clone();
+            let settings_path = settings_path.clone();
+            let sources = sources.clone();
+            let current = current.clone();
+            let zoom_entry = zoom_entry.clone();
+            let status = status.clone();
+            let browsing = browsing.clone();
+            gesture.connect_end(move |_, _| {
+                if !browsing.get() {
+                    return;
+                }
+                let zoom = view.property::<f64>("zoom-level");
+                persist_zoom_level(
+                    &view,
+                    zoom,
+                    &settings,
+                    &settings_path,
+                    &sources,
+                    &current,
+                    &zoom_entry,
+                    &status,
+                );
+            });
+        }
+        webview.add_controller(gesture);
+    }
+    {
         let app = app.clone();
         quit_button.connect_clicked(move |_| app.quit());
     }
@@ -1580,9 +1633,9 @@ fn build_wallpaper(
     Ok(())
 }
 
-fn adjust_zoom(
+fn persist_zoom_level(
     view: &webkit::WebView,
-    factor: f64,
+    zoom: f64,
     settings: &RefCell<HashMap<String, SourceSettings>>,
     settings_path: &PathBuf,
     sources: &RefCell<Vec<String>>,
@@ -1590,7 +1643,7 @@ fn adjust_zoom(
     zoom_entry: &gtk::Entry,
     status: &gtk::Label,
 ) {
-    let zoom = (view.property::<f64>("zoom-level") * factor).clamp(0.25, 5.0);
+    let zoom = zoom.clamp(0.25, 5.0);
     view.set_zoom_level(zoom);
     zoom_entry.set_text(&zoom.to_string());
 
@@ -1614,6 +1667,29 @@ fn adjust_zoom(
             status.set_text(&format!("Changed page zoom, but could not save it: {error:#}"));
         }
     }
+}
+
+fn adjust_zoom(
+    view: &webkit::WebView,
+    factor: f64,
+    settings: &RefCell<HashMap<String, SourceSettings>>,
+    settings_path: &PathBuf,
+    sources: &RefCell<Vec<String>>,
+    current: &Cell<usize>,
+    zoom_entry: &gtk::Entry,
+    status: &gtk::Label,
+) {
+    let zoom = view.property::<f64>("zoom-level") * factor;
+    persist_zoom_level(
+        view,
+        zoom,
+        settings,
+        settings_path,
+        sources,
+        current,
+        zoom_entry,
+        status,
+    );
 }
 
 fn load_current(
