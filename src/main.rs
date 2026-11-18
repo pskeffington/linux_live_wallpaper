@@ -1140,7 +1140,11 @@ fn build_wallpaper(
 
             let inspect = gtk::gio::SimpleAction::new("wallpaper-inspect-page", None);
             let inspected_view = view.clone();
-            inspect.connect_activate(move |_, _| inspected_view.inspector().show());
+            inspect.connect_activate(move |_, _| {
+                if let Some(inspector) = inspected_view.inspector() {
+                    inspector.show();
+                }
+            });
             menu.append(&webkit::ContextMenuItem::from_gaction(
                 &inspect,
                 "Inspect Page",
