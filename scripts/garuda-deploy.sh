@@ -70,6 +70,7 @@ case "$action" in
     if [[ -z "${sources//[[:space:]]/}" ]]; then
       die "No saved sources. Re-run with --url http://FEEDER_HOST:8504/ or add a source first."
     fi
+    systemctl --user stop linux-live-wallpaper.service 2>/dev/null || true
     install -Dm755 "$built_binary" "$binary"
     install -d "$unit_dir"
     cat > "$unit_file" <<EOF
