@@ -27,7 +27,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Persist sources in a per-user text configuration file.
 - [x] Add, remove and list sources from the command line.
 - [x] Start with saved sources or pass temporary sources explicitly.
-- [ ] Persist all page customization per source; zoom, opacity, and reload interval are implemented, while CSS, JavaScript, user-agent and other options remain launch-wide.
+- [x] Persist per-source zoom, opacity, reload interval, custom CSS, custom JavaScript, and user-agent; other launch-wide options remain CLI-scoped.
 - [x] Native controller window with Previous/Next/Reload and browsing-mode toggle.
 - [ ] Full settings window and tray/background service.
 - [x] Switch among sources with native Previous/Next controls.
