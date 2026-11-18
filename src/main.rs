@@ -281,6 +281,7 @@ fn is_supported_url(address: &str) -> bool {
 fn build_wallpaper(
     app: &Application,
     urls: &[String],
+    config_path: PathBuf,
     monitor_index: Option<u32>,
     rotate_seconds: u32,
     reload_seconds: u32,
@@ -301,7 +302,7 @@ fn build_wallpaper(
     let mut css = custom_css.clone().unwrap_or_default();
     if invert_colors {
         css.push_str(
-            "\\nhtml { filter: invert(1) hue-rotate(180deg) !important; }\\nimg, video, canvas, picture, svg image { filter: invert(1) hue-rotate(180deg) !important; }\\n",
+            "\nhtml { filter: invert(1) hue-rotate(180deg) !important; }\nimg, video, canvas, picture, svg image { filter: invert(1) hue-rotate(180deg) !important; }\n",
         );
     }
     if !css.is_empty() {
@@ -341,7 +342,7 @@ fn build_wallpaper(
     webview.set_is_muted(true);
     webview.load_uri(&urls[0]);
 
-    let sources = Rc::new(urls.to_vec());
+    let sources = Rc::new(RefCell::new(urls.to_vec()));
     let current = Rc::new(Cell::new(0usize));
 
     let window = ApplicationWindow::builder()
@@ -385,7 +386,7 @@ fn build_wallpaper(
     window.present();
     set_wallpaper_interactive(&window, false);
 
-    let status = gtk::Label::new(Some(&sources[0]));
+    let status = gtk::Label::new(Some(&sources.borrow()[0]));
     status.set_wrap(true);
     status.set_xalign(0.0);
 
@@ -405,6 +406,22 @@ fn build_wallpaper(
     navigation.append(&reload_button);
     controls.append(&navigation);
 
+    let source_entry = gtk::Entry::new();
+    source_entry.set_placeholder_text(Some("https://example.com"));
+    controls.append(&source_entry);
+    let source_actions = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    let add_button = gtk::Button::with_label("Add source");
+    let remove_button = gtk::Button::with_label("Remove active");
+    let move_up_button = gtk::Button::with_label("Move up");
+    let move_down_button = gtk::Button::with_label("Move down");
+    source_actions.append(&add_button);
+    source_actions.append(&remove_button);
+    controls.append(&source_actions);
+    let order_actions = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    order_actions.append(&move_up_button);
+    order_actions.append(&move_down_button);
+    controls.append(&order_actions);
+
     let browse_button = gtk::Button::with_label("Enable browsing mode");
     controls.append(&browse_button);
     let quit_button = gtk::Button::with_label("Quit wallpaper");
@@ -423,10 +440,11 @@ fn build_wallpaper(
         let current = current.clone();
         let status = status.clone();
         previous_button.connect_clicked(move |_| {
-            let index = (current.get() + sources.len() - 1) % sources.len();
+            let list = sources.borrow();
+            let index = (current.get() + list.len() - 1) % list.len();
             current.set(index);
-            view.load_uri(&sources[index]);
-            status.set_text(&sources[index]);
+            view.load_uri(&list[index]);
+            status.set_text(&list[index]);
         });
     }
     {
@@ -435,15 +453,91 @@ fn build_wallpaper(
         let current = current.clone();
         let status = status.clone();
         next_button.connect_clicked(move |_| {
-            let index = (current.get() + 1) % sources.len();
+            let list = sources.borrow();
+            let index = (current.get() + 1) % list.len();
             current.set(index);
-            view.load_uri(&sources[index]);
-            status.set_text(&sources[index]);
+            view.load_uri(&list[index]);
+            status.set_text(&list[index]);
         });
     }
     {
         let view = webview.clone();
         reload_button.connect_clicked(move |_| view.reload());
+    }
+
+    {
+        let path = config_path.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let entry = source_entry.clone();
+        let view = webview.clone();
+        let status = status.clone();
+        add_button.connect_clicked(move |_| {
+            let address = entry.text().trim().to_owned();
+            if !is_supported_url(&address) {
+                status.set_text("Enter a valid http://, https:// or file:// URL.");
+                return;
+            }
+            let mut updated = sources.borrow().clone();
+            if updated.contains(&address) {
+                status.set_text("That source is already in the list.");
+                return;
+            }
+            updated.push(address);
+            if let Err(error) = save_sources(&path, &updated) {
+                status.set_text(&format!("Could not save sources: {error}"));
+                return;
+            }
+            *sources.borrow_mut() = updated;
+            current.set(sources.borrow().len() - 1);
+            load_current(&view, &sources, &current, &status);
+            entry.set_text("");
+        });
+    }
+    {
+        let path = config_path.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let view = webview.clone();
+        let status = status.clone();
+        remove_button.connect_clicked(move |_| {
+            let mut updated = sources.borrow().clone();
+            if updated.len() <= 1 {
+                status.set_text("Keep at least one source in the list.");
+                return;
+            }
+            updated.remove(current.get().min(updated.len() - 1));
+            if let Err(error) = save_sources(&path, &updated) {
+                status.set_text(&format!("Could not save sources: {error}"));
+                return;
+            }
+            *sources.borrow_mut() = updated;
+            current.set(current.get().min(sources.borrow().len() - 1));
+            load_current(&view, &sources, &current, &status);
+        });
+    }
+    for (button, direction) in [(&move_up_button, -1isize), (&move_down_button, 1isize)] {
+        let path = config_path.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let view = webview.clone();
+        let status = status.clone();
+        button.connect_clicked(move |_| {
+            let mut updated = sources.borrow().clone();
+            let index = current.get();
+            let target = index as isize + direction;
+            if target < 0 || target >= updated.len() as isize {
+                return;
+            }
+            updated.swap(index, target as usize);
+            if let Err(error) = save_sources(&path, &updated) {
+                status.set_text(&format!("Could not save sources: {error}"));
+                return;
+            }
+            *sources.borrow_mut() = updated;
+            current.set(target as usize);
+            load_current(&view, &sources, &current, &status);
+        });
     }
 
     let browsing = Rc::new(Cell::new(false));
@@ -493,16 +587,18 @@ fn build_wallpaper(
                 view.reload();
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Left {
-                let index = (current.get() + sources.len() - 1) % sources.len();
+                let list = sources.borrow();
+                let index = (current.get() + list.len() - 1) % list.len();
                 current.set(index);
-                view.load_uri(&sources[index]);
-                status.set_text(&sources[index]);
+                view.load_uri(&list[index]);
+                status.set_text(&list[index]);
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
-                let index = (current.get() + 1) % sources.len();
+                let list = sources.borrow();
+                let index = (current.get() + 1) % list.len();
                 current.set(index);
-                view.load_uri(&sources[index]);
-                status.set_text(&sources[index]);
+                view.load_uri(&list[index]);
+                status.set_text(&list[index]);
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
@@ -560,6 +656,15 @@ fn build_wallpaper(
         }
     }
     Ok(())
+}
+
+fn load_current(view: &webkit::WebView, sources: &RefCell<Vec<String>>, current: &Cell<usize>, status: &gtk::Label) {
+    let list = sources.borrow();
+    if list.is_empty() { return; }
+    let index = current.get().min(list.len() - 1);
+    current.set(index);
+    view.load_uri(&list[index]);
+    status.set_text(&list[index]);
 }
 
 fn set_wallpaper_interactive(window: &ApplicationWindow, enabled: bool) {
