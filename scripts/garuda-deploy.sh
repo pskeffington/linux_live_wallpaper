@@ -9,8 +9,9 @@ binary="${bin_dir}/${app_name}"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/garuda-deploy.sh <install|remove|run|status> [--url URL] [--monitor INDEX] [--allow-self-signed HOST]
+Usage: scripts/garuda-deploy.sh <preflight|install|remove|run|status> [--url URL] [--monitor INDEX] [--allow-self-signed HOST]
 
+preflight Check the active layer-shell protocol and native libraries without changes.
 install  Build and install the binary for this user, then enable its systemd user service.
 remove   Stop/disable the service and remove app files created by this script.
 run      Run the app in the current Wayland session with the native controller.
@@ -93,6 +94,11 @@ add_url() {
 }
 
 case "$action" in
+  preflight)
+    check_wayland
+    check_native_deps
+    printf '%s\\n' "Wayland layer shell and native build/runtime dependencies are ready."
+    ;;
   install)
     check_wayland
     check_native_deps
