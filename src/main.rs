@@ -819,12 +819,18 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
         previous_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + list.len() - 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     {
@@ -843,12 +849,18 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
         next_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     {
@@ -1035,6 +1047,12 @@ fn build_wallpaper(
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
         let default_page_settings = default_page_settings.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
         add_button.connect_clicked(move |_| {
             let address = entry.text().trim().to_owned();
             if !is_supported_url(&address) {
@@ -1063,7 +1081,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(sources.borrow().len() - 1);
-            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
             entry.set_text("");
         });
     }
@@ -1085,6 +1103,12 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
         remove_button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             if updated.len() <= 1 {
@@ -1103,7 +1127,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(current.get().min(sources.borrow().len() - 1));
-            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     for (button, direction) in [(&move_up_button, -1isize), (&move_down_button, 1isize)] {
@@ -1123,6 +1147,12 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
         button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             let index = current.get();
@@ -1137,7 +1167,7 @@ fn build_wallpaper(
             }
             *sources.borrow_mut() = updated;
             current.set(target as usize);
-            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
 
@@ -1192,6 +1222,12 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
         key_controller.connect_key_pressed(move |_, key, _, modifiers| {
             use gtk::gdk::{Key, ModifierType};
 
@@ -1203,14 +1239,14 @@ fn build_wallpaper(
                 let index = (current.get() + list.len() - 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
                 let list = sources.borrow();
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
@@ -1245,13 +1281,19 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
         gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
             let list = sources.borrow();
             if list.len() > 1 {
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
             }
             gtk::glib::ControlFlow::Continue
         });
@@ -1332,10 +1374,15 @@ fn load_current(
     css_buffer: &gtk::TextBuffer,
     js_buffer: &gtk::TextBuffer,
     user_agent_entry: &gtk::Entry,
+    monitor_entry: &gtk::Entry,
     zoom_entry: &gtk::Entry,
     opacity_entry: &gtk::Entry,
     reload_entry: &gtk::Entry,
-    screen_dimensions: (u32, u32),
+    display: &gtk::gdk::Display,
+    window: &ApplicationWindow,
+    launch_monitor: &gtk::gdk::Monitor,
+    selected_monitor: &RefCell<Option<gtk::gdk::Monitor>>,
+    screen_dimensions: &Cell<(u32, u32)>,
     active_source_path: Option<&Path>,
 ) {
     let list = sources.borrow();
@@ -1355,12 +1402,37 @@ fn load_current(
         user_agent: None,
         monitor_connector: None,
     });
-    let resolved_address = resolve_url(&address, screen_dimensions);
+    let requested_connector = setting.monitor_connector.as_deref();
+    let selected = requested_connector
+        .and_then(|connector| find_monitor_by_connector(display, connector))
+        .or_else(|| {
+            launch_monitor
+                .connector()
+                .as_deref()
+                .and_then(|connector| find_monitor_by_connector(display, connector))
+        })
+        .or_else(|| monitor_at(display, 0));
+    let Some(monitor) = selected else {
+        status.set_text("No display is available for the wallpaper.");
+        return;
+    };
+    window.set_monitor(&monitor);
+    *selected_monitor.borrow_mut() = Some(monitor.clone());
+    let dimensions = monitor_dimensions(&monitor);
+    screen_dimensions.set(dimensions);
+    let resolved_address = resolve_url(&address, dimensions);
     apply_source_customizations(content_manager, base_css, &setting, web_settings);
     view.load_uri(&resolved_address);
     view.set_zoom_level(setting.zoom);
     view.set_opacity(setting.opacity);
-    status.set_text(&address);
+    if requested_connector.is_some() && monitor.connector().as_deref() != requested_connector {
+        status.set_text(&format!(
+            "{address} (display {requested_connector:?} is disconnected; using {})",
+            monitor.connector().as_deref().unwrap_or("current output")
+        ));
+    } else {
+        status.set_text(&address);
+    }
     if let Some(path) = active_source_path {
         if let Err(error) = save_active_source(path, &address) {
             status.set_text(&format!("Selected page, but could not save resume state: {error:#}"));
@@ -1372,6 +1444,7 @@ fn load_current(
     css_buffer.set_text(setting.custom_css.as_deref().unwrap_or(""));
     js_buffer.set_text(setting.custom_js.as_deref().unwrap_or(""));
     user_agent_entry.set_text(setting.user_agent.as_deref().unwrap_or(""));
+    monitor_entry.set_text(setting.monitor_connector.as_deref().unwrap_or(""));
 }
 
 fn resolve_url(address: &str, dimensions: (u32, u32)) -> String {
