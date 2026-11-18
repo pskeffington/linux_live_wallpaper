@@ -8,6 +8,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 |---|---|---|
 | Remote or local website | WebKitGTK URL/file source | CLI supports http, https and file URLs |
 | Browsing mode | Temporarily enable pointer/keyboard input and navigation controls | Not implemented |
+| Page zoom | Zoom page contents and remember the level per website | Launch-time `--zoom`; not persisted per source |
 | Automatic reload interval | Per-source timer, pause while hidden or suspended | Launch-time `--reload-seconds`; it currently reloads continuously regardless of visibility |
 | Multiple websites and switching | Source collection with active source | CLI source list and timed rotation; no interactive switching UI |
 | Choose display | Monitor picker and per-source assignment | CLI display listing and launch-time `--monitor INDEX`; no saved assignment or settings UI |
