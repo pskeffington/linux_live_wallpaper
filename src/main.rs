@@ -158,10 +158,9 @@ fn main() -> Result<()> {
 
     let urls = if args.urls.is_empty() {
         if saved_sources.is_empty() {
-            vec!["https://example.com".to_owned()]
-        } else {
-            saved_sources
+            bail!("No wallpaper sources configured. Add one with --add URL or start with --url URL.");
         }
+        saved_sources
     } else {
         args.urls
     };
