@@ -10,7 +10,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Browsing mode | Temporarily enable pointer/keyboard input and navigation controls | Native controller toggles pointer input and on-demand keyboard focus; no browser history controls |
 | Page zoom | Zoom page contents and remember the level per website | Launch-time `--zoom`; not persisted per source |
 | Automatic reload interval | Per-source timer, pause while hidden or suspended | Launch-time `--reload-seconds`; it currently reloads continuously regardless of visibility |
-| Multiple websites and switching | Source collection with active source | Persistent CLI source list, timed rotation, and native Previous/Next controls; no reordering or remembered selection |
+| Multiple websites and switching | Source collection with active source | Persistent CLI and native controller add/remove/reorder, timed rotation, and Previous/Next controls; active source is not restored |
 | Choose display | Monitor picker and per-source assignment | CLI display listing and launch-time `--monitor INDEX`; no saved assignment or settings UI |
 | Invert colors | Optional injected stylesheet/filter | Launch-time `--invert-colors` |
 | Custom CSS and JavaScript | Explicit per-source customization fields | Launch-time files via `--css-file` and `--js-file`; not saved per source |
