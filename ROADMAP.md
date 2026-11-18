@@ -18,7 +18,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Reject unsupported URL schemes.
 - [x] Resolve `[[screenWidth]]` and `[[screenHeight]]` URL placeholders using monitor geometry and the GDK scale factor (fractional scaling/runtime behavior still needs verification).
 - [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request, muted audio, and host-scoped self-signed certificate trust.
-- [ ] Verify compilation and runtime on Arch Linux with a layer-shell-capable compositor.
+- [x] Compile against current Arch packages in the Arch Linux CI container (GitHub Actions run 44283177523, source `71b7ced`).
+- [ ] Runtime-test wallpaper placement and rendering on Arch/Garuda with a layer-shell-capable compositor.
 - [ ] Detect unsupported compositor/protocol and report a recovery path.
 - [x] Report WebKit load failures in the controller and service logs while retaining WebKit's stock error page.
 - [ ] Provide a safe quit/recovery shortcut and prevent the wallpaper from obscuring desktop controls.
