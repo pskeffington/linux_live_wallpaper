@@ -30,7 +30,7 @@ printf 'session=%s\n' "${XDG_SESSION_TYPE:-unset}"
 wayland-info | rg zwlr_layer_shell_v1
 ```
 
-The session should report `wayland`, and the protocol query should return `zwlr_layer_shell_v1`. If the protocol is absent, this backend cannot create the wallpaper layer in that session.
+The session should report `wayland`, and the protocol query should return `zwlr_layer_shell_v1`. The Garuda deployment helper repeats this check and refuses to build or launch when the active compositor does not advertise layer shell. It also checks that GTK 4, WebKitGTK 6, and GTK Layer Shell development metadata is installed before building or running.
 
 ## Try the live Tar1090 feed
 
