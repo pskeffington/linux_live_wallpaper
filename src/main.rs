@@ -39,7 +39,7 @@ struct Args {
     remove: Vec<String>,
 
     /// Start with a randomly selected source from the configured URLs.
-    #[arg(long)]
+    #[arg(long = "random")]
     random_source: bool,
 
     /// Print the persistent source list and exit.
@@ -259,7 +259,7 @@ fn random_source_index(len: usize, current: Option<usize>) -> std::io::Result<us
     }
 
     let current = current.filter(|index| *index < len);
-    let choices = len - usize::from(current.is_some());
+    let choices = len - if current.is_some() { 1 } else { 0 };
     let mut bytes = [0u8; 8];
     File::open("/dev/urandom")?.read_exact(&mut bytes)?;
     let mut index = (u64::from_ne_bytes(bytes) % choices as u64) as usize;
