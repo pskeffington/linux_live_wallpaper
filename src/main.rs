@@ -427,7 +427,7 @@ fn build_wallpaper(
 
     let content_manager = webkit::UserContentManager::new();
     let mut css = String::from(
-        "html:has(body > img:only-child), html:has(body > img:only-child) body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }\nhtml:has(body > img:only-child) body > img:only-child { display: block; width: 100vw; height: 100vh; object-fit: cover; }\n",
+        "html:has(body > img:only-child), html:has(body > img:only-child) body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }\nhtml:has(body > img:only-child) body > img:only-child { display: block !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; }\n",
     );
     if let Some(custom_css) = custom_css {
         css.push_str(custom_css);
