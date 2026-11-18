@@ -427,11 +427,11 @@ fn build_wallpaper(
 
     let content_manager = webkit::UserContentManager::new();
     let mut css = String::from(
-        "html:has(body > img:only-child), html:has(body > img:only-child) body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }\\nhtml:has(body > img:only-child) body > img:only-child { display: block; width: 100vw; height: 100vh; object-fit: cover; }\\n",
+        "html:has(body > img:only-child), html:has(body > img:only-child) body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }\nhtml:has(body > img:only-child) body > img:only-child { display: block; width: 100vw; height: 100vh; object-fit: cover; }\n",
     );
     if let Some(custom_css) = custom_css {
         css.push_str(custom_css);
-        css.push('\\n');
+        css.push('\n');
     }
     if invert_colors {
         css.push_str(
