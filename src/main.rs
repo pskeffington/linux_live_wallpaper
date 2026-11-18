@@ -270,7 +270,9 @@ fn load_source_settings(path: &PathBuf) -> Result<HashMap<String, SourceSettings
     let contents = match fs::read_to_string(path) {
         Ok(contents) => contents,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(HashMap::new()),
-        Err(error) => return Err(error).with_context(|| format!("could not read {}", path.display())),
+        Err(error) => {
+            return Err(error).with_context(|| format!("could not read {}", path.display()));
+        }
     };
     let mut settings = HashMap::new();
     for (line_number, line) in contents.lines().enumerate() {
@@ -278,20 +280,24 @@ fn load_source_settings(path: &PathBuf) -> Result<HashMap<String, SourceSettings
         if fields.len() != 3 {
             bail!("invalid source settings at {}:{}", path.display(), line_number + 1);
         }
-        let url = decode_hex(fields[0])
-            .with_context(|| format!("invalid URL encoding at {}:{}", path.display(), line_number + 1))?;
-        let zoom = parse_zoom(fields[1])
-            .with_context(|| format!("invalid zoom setting at {}:{}", path.display(), line_number + 1))?;
-        let reload_seconds = fields[2]
-            .parse::<u32>()
-            .with_context(|| format!("invalid reload interval at {}:{}", path.display(), line_number + 1))?;
+        let url = decode_hex(fields[0]).with_context(|| {
+            format!("invalid URL encoding at {}:{}", path.display(), line_number + 1)
+        })?;
+        let zoom = parse_zoom(fields[1]).with_context(|| {
+            format!("invalid zoom setting at {}:{}", path.display(), line_number + 1)
+        })?;
+        let reload_seconds = fields[2].parse::<u32>().with_context(|| {
+            format!("invalid reload interval at {}:{}", path.display(), line_number + 1)
+        })?;
         settings.insert(url, SourceSettings { zoom, reload_seconds });
     }
     Ok(settings)
 }
 
 fn save_source_settings(path: &PathBuf, settings: &HashMap<String, SourceSettings>) -> Result<()> {
-    let parent = path.parent().context("settings path must have a parent directory")?;
+    let parent = path
+        .parent()
+        .context("settings path must have a parent directory")?;
     fs::create_dir_all(parent)
         .with_context(|| format!("could not create {}", parent.display()))?;
     let mut urls: Vec<_> = settings.keys().collect();
@@ -609,10 +615,13 @@ fn build_wallpaper(
             let list = sources.borrow();
             let address = list[current.get().min(list.len() - 1)].clone();
             drop(list);
-            settings.borrow_mut().insert(address, SourceSettings {
-                zoom: parsed_zoom,
-                reload_seconds: parsed_reload,
-            });
+            settings.borrow_mut().insert(
+                address,
+                SourceSettings {
+                    zoom: parsed_zoom,
+                    reload_seconds: parsed_reload,
+                },
+            );
             if let Err(error) = save_source_settings(&settings_path, &settings.borrow()) {
                 status.set_text(&format!("Could not save page settings: {error}"));
                 return;
@@ -655,7 +664,9 @@ fn build_wallpaper(
                 return;
             }
             *sources.borrow_mut() = updated;
-            settings.borrow_mut().insert(address, SourceSettings { zoom, reload_seconds });
+            settings
+                .borrow_mut()
+                .insert(address, SourceSettings { zoom, reload_seconds });
             if let Err(error) = save_source_settings(&settings_path, &settings.borrow()) {
                 status.set_text(&format!("Could not save page settings: {error}"));
                 return;
@@ -839,7 +850,12 @@ fn build_wallpaper(
             let interval = {
                 let list = sources.borrow();
                 list.get(index)
-                    .and_then(|address| settings.borrow().get(address).map(|setting| setting.reload_seconds))
+                    .and_then(|address| {
+                        settings
+                            .borrow()
+                            .get(address)
+                            .map(|setting| setting.reload_seconds)
+                    })
                     .unwrap_or(0)
             };
             if interval == 0 {
