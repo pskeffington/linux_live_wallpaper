@@ -43,6 +43,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Persist per-source GDK output connector assignments; move the wallpaper on source changes and fall back/reselect when monitors are removed or reconnected (runtime validation remains open).
 - [x] Click-through wallpaper surface with a native browsing-mode toggle and on-demand keyboard focus; expose Plash-compatible `is-plash-app` and `plash-is-browsing-mode` document classes.
 - [x] Add WebKit Back/Forward history controls to the native controller.
+- [x] Add two-point pinch zoom in browsing mode and save the resulting per-source zoom; touchscreen/touchpad runtime behavior remains to verify.
 - [x] Remember browsing-mode preference for saved-source launches and report loading, committed-response, completion, and failure states; explicit `--url` sessions remain temporary.
 - [x] Add opt-in battery-aware hiding based on Linux power-supply status.
 - [x] Add CSS aspect-fill behavior for standalone image documents (pending WebKit runtime verification).
