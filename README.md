@@ -49,7 +49,15 @@ Custom JavaScript executes in each loaded page at document start. Only use scrip
 
 Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Per-source zoom, opacity, and reload settings are stored alongside them in `settings.tsv`. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
-List displays with `cargo run --release -- --list-monitors`, then select one by its zero-based GDK index with `--monitor INDEX`. Monitor ordering can change when displays are reconnected.\n\nFor a local Tar1090 dashboard, point the wallpaper at its web root:
+List displays with `cargo run --release -- --list-monitors`, then select one by its zero-based GDK index with `--monitor INDEX`. Monitor ordering can change when displays are reconnected.
+
+Use `[[screenWidth]]` and `[[screenHeight]]` in a URL to substitute the selected monitor’s dimensions. With no `--monitor`, output index `0` is selected. For example:
+
+```sh
+cargo run --release -- --url 'https://picsum.photos/[[screenWidth]]/[[screenHeight]]' --monitor 0
+```
+
+For a local Tar1090 dashboard, point the wallpaper at its web root:
 
 ```sh
 cargo run --release -- --url http://feeder-host:port/
