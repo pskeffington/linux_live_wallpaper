@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 build() {
   cd "${srcdir}/linux_live_wallpaper-${pkgver}"
-  cargo build --release
+  cargo build --release --locked
 }
 
 package() {
