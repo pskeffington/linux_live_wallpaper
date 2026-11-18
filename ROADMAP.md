@@ -21,8 +21,11 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 
 ## Milestone 2 — Plash core workflow
 
+- [x] Persist sources in a per-user text configuration file.
+- [x] Add, remove and list sources from the command line.
+- [x] Start with saved sources or pass temporary sources explicitly.
 - [ ] Native settings window and tray/background service.
-- [ ] Persist sources and active selection; add, remove, reorder and switch them interactively.
+- [ ] Reorder sources and switch among them interactively.
 - [ ] Restore wallpaper state after login.
 - [ ] Reload, navigate, zoom, user-agent and page load controls.
 - [ ] Web inspector/developer tools toggle.
