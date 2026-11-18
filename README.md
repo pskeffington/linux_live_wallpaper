@@ -1,6 +1,6 @@
 # Linux Live Wallpaper
 
-A Rust desktop application for running web content as an interactive live wallpaper, inspired by [Plash](https://github.com/sindresorhus/Plash). The initial compatibility target is Arch Linux and Arch-derived distributions.
+A Rust desktop application for running web content as an interactive live wallpaper, inspired by [Plash](https://github.com/sindresorhus/Plash). The initial compatibility target is Arch Linux and Arch-derived distributions, with a setup guide for Garuda Dr460nized (KDE Plasma).
 
 ## Status
 
@@ -13,13 +13,17 @@ bash scripts/install-arch-deps.sh
 cargo build --release --locked
 ```
 
-On Garuda Dr460nized, the per-user deployment helper also builds and installs the app and can enable a systemd user service for login:
+For Garuda Dr460nized, start with the [Garuda setup guide](docs/GARUDA_DR460NIZED.md). It covers dependency installation, Wayland protocol checks, and the KDE user service. To try the configured Tar1090 test feed:
 
 ```sh
-bash scripts/garuda-deploy.sh install --url http://FEEDER_HOST:8504/
+cargo run --release -- --url http://172.20.30.64:8504/ --monitor 0
 ```
 
-Replace `FEEDER_HOST` with your Tar1090 host. See [docs/GARUDA_DR460NIZED.md](docs/GARUDA_DR460NIZED.md) for start, stop, status, and removal instructions.
+To install it for the current user and enable startup at login:
+
+```sh
+bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/
+```
 
 Add and inspect persistent sources:
 
@@ -55,12 +59,6 @@ Use `[[screenWidth]]` and `[[screenHeight]]` in a URL to substitute the selected
 
 ```sh
 cargo run --release -- --url 'https://picsum.photos/[[screenWidth]]/[[screenHeight]]' --monitor 0
-```
-
-For a local Tar1090 dashboard, point the wallpaper at its web root:
-
-```sh
-cargo run --release -- --url http://feeder-host:port/
 ```
 
 ## Goals
