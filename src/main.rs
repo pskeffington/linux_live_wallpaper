@@ -1091,7 +1091,7 @@ fn build_wallpaper(
             let zoom_path = settings_path.clone();
             let zoom_sources = sources.clone();
             let zoom_current = current.clone();
-            let zoom_entry = zoom_entry.clone();
+            let zoom_in_entry = zoom_entry.clone();
             let zoom_status = status.clone();
             zoom_in.connect_activate(move |_, _| {
                 adjust_zoom(
@@ -1101,7 +1101,7 @@ fn build_wallpaper(
                     &zoom_path,
                     &zoom_sources,
                     &zoom_current,
-                    &zoom_entry,
+                    &zoom_in_entry,
                     &zoom_status,
                 );
             });
@@ -1117,7 +1117,7 @@ fn build_wallpaper(
             let zoom_path = settings_path.clone();
             let zoom_sources = sources.clone();
             let zoom_current = current.clone();
-            let zoom_entry = zoom_entry.clone();
+            let zoom_out_entry = zoom_entry.clone();
             let zoom_status = status.clone();
             zoom_out.connect_activate(move |_, _| {
                 adjust_zoom(
@@ -1127,7 +1127,7 @@ fn build_wallpaper(
                     &zoom_path,
                     &zoom_sources,
                     &zoom_current,
-                    &zoom_entry,
+                    &zoom_out_entry,
                     &zoom_status,
                 );
             });
