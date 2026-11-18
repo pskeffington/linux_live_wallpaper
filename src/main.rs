@@ -429,6 +429,41 @@ fn decode_hex(encoded: &str) -> Result<String> {
     String::from_utf8(bytes).context("URL settings key is not valid UTF-8")
 }
 
+fn apply_source_customizations(
+    content_manager: &webkit::UserContentManager,
+    base_css: &str,
+    source: &SourceSettings,
+    web_settings: &webkit::Settings,
+) {
+    content_manager.remove_all_style_sheets();
+    let mut css = base_css.to_owned();
+    if let Some(source_css) = source.custom_css.as_deref() {
+        css.push_str(source_css);
+        css.push('\n');
+    }
+    let stylesheet = webkit::UserStyleSheet::new(
+        &css,
+        webkit::UserContentInjectedFrames::TopFrame,
+        webkit::UserStyleLevel::User,
+        &[],
+        &[],
+    );
+    content_manager.add_style_sheet(&stylesheet);
+
+    content_manager.remove_all_scripts();
+    if let Some(source_js) = source.custom_js.as_deref().filter(|script| !script.is_empty()) {
+        let script = webkit::UserScript::new(
+            source_js,
+            webkit::UserContentInjectedFrames::TopFrame,
+            webkit::UserScriptInjectionTime::Start,
+            &[],
+            &[],
+        );
+        content_manager.add_script(&script);
+    }
+    web_settings.set_user_agent(source.user_agent.as_deref());
+}
+
 fn read_optional_file(path: Option<&PathBuf>) -> Result<Option<String>> {
     path.map(|path| {
         fs::read_to_string(path).with_context(|| format!("could not read {}", path.display()))
@@ -520,59 +555,40 @@ fn build_wallpaper(
         Some(path) => load_active_source_index(path, urls)?,
         None => 0,
     };
-    let mut loaded_settings = load_source_settings(&settings_path, opacity)?;
+    let default_page_settings = SourceSettings {
+        zoom,
+        opacity,
+        reload_seconds,
+        custom_css: custom_css.clone(),
+        custom_js: custom_js.clone(),
+        user_agent: user_agent.map(str::to_owned),
+    };
+    let mut loaded_settings = load_source_settings(&settings_path, &default_page_settings)?;
     for address in urls {
-        loaded_settings.entry(address.clone()).or_insert(SourceSettings {
-            zoom,
-            opacity,
-            reload_seconds,
-        });
+        loaded_settings
+            .entry(address.clone())
+            .or_insert_with(|| default_page_settings.clone());
     }
     let source_settings = Rc::new(RefCell::new(loaded_settings));
 
     let content_manager = webkit::UserContentManager::new();
-    let mut css = String::from(
+    let mut base_css = String::from(
         "html:has(body > img:only-child), html:has(body > img:only-child) body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }\nhtml:has(body > img:only-child) body > img:only-child { display: block !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; }\n",
     );
-    if let Some(custom_css) = custom_css {
-        css.push_str(custom_css);
-        css.push('\n');
-    }
     if invert_colors {
-        css.push_str(
+        base_css.push_str(
             "\nhtml { filter: invert(1) hue-rotate(180deg) !important; }\nimg, video, canvas, picture, svg image { filter: invert(1) hue-rotate(180deg) !important; }\n",
         );
     }
-    if !css.is_empty() {
-        let stylesheet = webkit::UserStyleSheet::new(
-            &css,
-            webkit::UserContentInjectedFrames::TopFrame,
-            webkit::UserStyleLevel::User,
-            &[],
-            &[],
-        );
-        content_manager.add_style_sheet(&stylesheet);
-    }
-    if let Some(script) = custom_js {
-        let script = webkit::UserScript::new(
-            script,
-            webkit::UserContentInjectedFrames::TopFrame,
-            webkit::UserScriptInjectionTime::Start,
-            &[],
-            &[],
-        );
-        content_manager.add_script(&script);
-    }
-
-    let settings = webkit::Settings::new();
-    if let Some(user_agent) = user_agent {
-        settings.set_user_agent(Some(user_agent));
-    }
+    let base_css = Rc::new(base_css);
+    let web_settings = webkit::Settings::new();
+    let initial_settings = source_settings.borrow()[&urls[initial_index]].clone();
+    apply_source_customizations(&content_manager, &base_css, &initial_settings, &web_settings);
     let network_session = webkit::NetworkSession::default();
     network_session.set_tls_errors_policy(webkit::TLSErrorsPolicy::Fail);
     let webview = webkit::WebView::builder()
         .network_session(&network_session)
-        .settings(&settings)
+        .settings(&web_settings)
         .user_content_manager(&content_manager)
         .build();
     if !allow_self_signed_hosts.is_empty() {
