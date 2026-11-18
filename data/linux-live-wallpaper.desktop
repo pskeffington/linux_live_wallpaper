@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Linux Live Wallpaper
+Comment=Run a configured website as a Wayland desktop wallpaper
+Exec=linux-live-wallpaper
+Icon=preferences-desktop-wallpaper
+Terminal=false
+Categories=Utility;DesktopSettings;
+Keywords=wallpaper;web;desktop;
+StartupNotify=false
