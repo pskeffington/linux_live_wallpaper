@@ -37,7 +37,7 @@ cargo run --release
 cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300 --reload-seconds 900 --monitor 0
 ```
 
-A native controller window opens with Previous, Next, Reload, browsing-mode, and persistent source controls. Add, remove, and reorder sources there; changes are saved to the source list. The controller also saves zoom, opacity, and automatic reload interval for each page. The wallpaper surface is click-through by default; browsing mode enables pointer input and on-demand keyboard focus. With the controller focused, use Alt+Left/Right to switch sources, Ctrl+R to reload, and Ctrl+B to toggle browsing mode. Closing the controller exits the wallpaper.
+A native controller window opens with Previous, Next, Reload, browsing-mode, browser history, and persistent source controls. Add, remove, and reorder sources there; changes are saved to the source list. The controller also saves zoom, opacity, and automatic reload interval for each page. The wallpaper surface is click-through by default; browsing mode enables pointer input and on-demand keyboard focus; Back and Forward navigate the active page’s WebKit history. With the controller focused, use Alt+Left/Right to switch sources, Ctrl+R to reload, and Ctrl+B to toggle browsing mode. Closing the controller exits the wallpaper.
 
 Per-run page options include custom CSS and JavaScript, color inversion, surface opacity, page zoom, and a custom user-agent:
 
