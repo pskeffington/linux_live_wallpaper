@@ -16,6 +16,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add opt-in timed switching between configured URLs.
 - [x] Add configurable interval-based page reload.
 - [x] Reject unsupported URL schemes.
+- [x] Resolve `[[screenWidth]]` and `[[screenHeight]]` URL placeholders from the selected monitor geometry (HiDPI behavior still needs verification).
 - [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request, muted audio, and host-scoped self-signed certificate trust.
 - [ ] Verify compilation and runtime on Arch Linux with a layer-shell-capable compositor.
 - [ ] Add graceful errors for unsupported compositor/protocol and WebKit load failures.
