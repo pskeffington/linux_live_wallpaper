@@ -315,6 +315,25 @@ fn save_sources(path: &PathBuf, sources: &[String]) -> Result<()> {
     fs::write(path, contents).with_context(|| format!("could not write {}", path.display()))
 }
 
+fn load_audio_muted(path: &Path) -> Result<bool> {
+    match fs::read_to_string(path) {
+        Ok(value) => match value.trim() {
+            "muted" => Ok(true),
+            "unmuted" => Ok(false),
+            _ => bail!("invalid audio mute setting in {}", path.display()),
+        },
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(true),
+        Err(error) => Err(error).with_context(|| format!("could not read {}", path.display())),
+    }
+}
+
+fn save_audio_muted(path: &Path, muted: bool) -> Result<()> {
+    let parent = path.parent().context("audio setting path must have a parent directory")?;
+    fs::create_dir_all(parent).with_context(|| format!("could not create {}", parent.display()))?;
+    fs::write(path, if muted { "muted\n" } else { "unmuted\n" })
+        .with_context(|| format!("could not write {}", path.display()))
+}
+
 fn load_browsing_mode(path: &Path) -> Result<bool> {
     match fs::read_to_string(path) {
         Ok(value) => Ok(value.trim() == "enabled"),
@@ -612,6 +631,8 @@ fn build_wallpaper(
         .with_context(|| format!("display index {launch_monitor_index} does not exist"))?;
 
     let settings_path = config_path.with_file_name("settings.tsv");
+    let audio_mute_path = config_path.with_file_name("audio-muted.txt");
+    let audio_muted = load_audio_muted(&audio_mute_path)?;
     let active_source_path = Rc::new(
         restore_saved_source.then(|| config_path.with_file_name("active-source.txt")),
     );
@@ -701,7 +722,7 @@ fn build_wallpaper(
     if transparent_background {
         webview.set_background_color(&gtk::gdk::RGBA::new(0.0, 0.0, 0.0, 0.0));
     }
-    webview.set_is_muted(true);
+    webview.set_is_muted(audio_muted);
 
     let sources = Rc::new(RefCell::new(urls.to_vec()));
     let current = Rc::new(Cell::new(initial_index));
@@ -750,6 +771,22 @@ fn build_wallpaper(
     controls.set_margin_start(12);
     controls.set_margin_end(12);
     controls.append(&status);
+
+    let mute_audio_button = gtk::CheckButton::with_label("Mute website audio");
+    mute_audio_button.set_active(audio_muted);
+    controls.append(&mute_audio_button);
+    {
+        let view = webview.clone();
+        let path = audio_mute_path.clone();
+        let status = status.clone();
+        mute_audio_button.connect_toggled(move |button| {
+            let muted = button.is_active();
+            view.set_is_muted(muted);
+            if let Err(error) = save_audio_muted(&path, muted) {
+                status.set_text(&format!("Changed audio setting, but could not save it: {error:#}"));
+            }
+        });
+    }
 
     let navigation = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let previous_button = gtk::Button::with_label("Previous");
