@@ -11,11 +11,14 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use webkit::prelude::*;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 struct SourceSettings {
     zoom: f64,
     opacity: f64,
     reload_seconds: u32,
+    custom_css: Option<String>,
+    custom_js: Option<String>,
+    user_agent: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -309,7 +312,7 @@ fn save_active_source(path: &Path, source: &str) -> Result<()> {
 
 fn load_source_settings(
     path: &PathBuf,
-    default_opacity: f64,
+    defaults: &SourceSettings,
 ) -> Result<HashMap<String, SourceSettings>> {
     let contents = match fs::read_to_string(path) {
         Ok(contents) => contents,
@@ -321,7 +324,7 @@ fn load_source_settings(
     let mut settings = HashMap::new();
     for (line_number, line) in contents.lines().enumerate() {
         let fields: Vec<_> = line.split('\t').collect();
-        if fields.len() != 3 && fields.len() != 4 {
+        if fields.len() != 3 && fields.len() != 4 && fields.len() != 7 {
             bail!("invalid source settings at {}:{}", path.display(), line_number + 1);
         }
         let url = decode_hex(fields[0]).with_context(|| {
@@ -330,22 +333,30 @@ fn load_source_settings(
         let zoom = parse_zoom(fields[1]).with_context(|| {
             format!("invalid zoom setting at {}:{}", path.display(), line_number + 1)
         })?;
-        let (opacity, reload_field) = if fields.len() == 4 {
+        let (opacity, reload_field) = if fields.len() == 4 || fields.len() == 7 {
             (parse_opacity(fields[2])?, fields[3])
         } else {
-            (default_opacity, fields[2])
+            (defaults.opacity, fields[2])
         };
         let reload_seconds = reload_field.parse::<u32>().with_context(|| {
             format!("invalid reload interval at {}:{}", path.display(), line_number + 1)
         })?;
-        settings.insert(
-            url,
-            SourceSettings {
-                zoom,
-                opacity,
-                reload_seconds,
-            },
-        );
+        let mut source = defaults.clone();
+        source.zoom = zoom;
+        source.opacity = opacity;
+        source.reload_seconds = reload_seconds;
+        if fields.len() == 7 {
+            source.custom_css = decode_optional_hex(fields[4]).with_context(|| {
+                format!("invalid CSS setting at {}:{}", path.display(), line_number + 1)
+            })?;
+            source.custom_js = decode_optional_hex(fields[5]).with_context(|| {
+                format!("invalid JavaScript setting at {}:{}", path.display(), line_number + 1)
+            })?;
+            source.user_agent = decode_optional_hex(fields[6]).with_context(|| {
+                format!("invalid user-agent setting at {}:{}", path.display(), line_number + 1)
+            })?;
+        }
+        settings.insert(url, source);
     }
     Ok(settings)
 }
@@ -360,16 +371,33 @@ fn save_source_settings(path: &PathBuf, settings: &HashMap<String, SourceSetting
     urls.sort();
     let mut contents = String::new();
     for url in urls {
-        let setting = settings[url];
+        let setting = &settings[url];
         contents.push_str(&format!(
-            "{}\t{}\t{}\t{}\n",
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
             encode_hex(url.as_bytes()),
             setting.zoom,
             setting.opacity,
             setting.reload_seconds,
+            encode_optional_hex(setting.custom_css.as_deref()),
+            encode_optional_hex(setting.custom_js.as_deref()),
+            encode_optional_hex(setting.user_agent.as_deref()),
         ));
     }
     fs::write(path, contents).with_context(|| format!("could not write {}", path.display()))
+}
+
+fn encode_optional_hex(value: Option<&str>) -> String {
+    value
+        .map(|value| encode_hex(value.as_bytes()))
+        .unwrap_or_else(|| "-".to_owned())
+}
+
+fn decode_optional_hex(value: &str) -> Result<Option<String>> {
+    if value == "-" {
+        Ok(None)
+    } else {
+        decode_hex(value).map(Some)
+    }
 }
 
 fn encode_hex(bytes: &[u8]) -> String {
