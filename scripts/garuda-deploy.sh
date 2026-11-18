@@ -65,7 +65,11 @@ case "$action" in
     if [[ -n "$url" ]]; then
       "$binary" --add "$url"
     fi
-    if ! "$binary" --list | rg -q .; then
+    source_list="$HOME/.config/linux-live-wallpaper/sources.txt"
+    if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
+      source_list="$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt"
+    fi
+    if [[ ! -s "$source_list" ]]; then
       die "No saved sources. Re-run with --url http://FEEDER_HOST:8504/ or add a source first."
     fi
     install -d "$unit_dir"
