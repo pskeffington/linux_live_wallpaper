@@ -1245,11 +1245,14 @@ fn build_wallpaper(
                 true
             } else {
                 let address = sources.borrow().get(current.get()).cloned();
-                let assigned = address
-                    .as_ref()
-                    .and_then(|address| settings.borrow().get(address))
-                    .and_then(|setting| setting.monitor_connector.as_deref());
+                let assigned = address.as_ref().and_then(|address| {
+                    settings
+                        .borrow()
+                        .get(address)
+                        .and_then(|setting| setting.monitor_connector.clone())
+                });
                 let preferred = assigned
+                    .as_deref()
                     .filter(|connector| find_monitor_by_connector(display, connector).is_some())
                     .map(str::to_owned)
                     .or_else(|| launch_monitor.connector().map(|connector| connector.to_string()));
