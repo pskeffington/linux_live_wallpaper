@@ -29,7 +29,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Save customization settings per source instead of using launch-wide options.
 - [x] Native controller window with Previous/Next/Reload and browsing-mode toggle.
 - [ ] Full settings window and tray/background service.
-- [ ] Reorder sources and switch among them interactively.
+- [x] Switch among sources with native Previous/Next controls.
+- [ ] Reorder saved sources and remember the active selection.
 - [ ] Restore wallpaper state after login.
 - [ ] Reload, navigation controls and web inspector/developer tools.
 - [x] Configure launch-time page zoom and user-agent.
