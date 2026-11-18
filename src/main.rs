@@ -36,6 +36,10 @@ struct Args {
     #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u32).range(0..))]
     rotate_seconds: u32,
 
+    /// Reload the current page every N seconds. Zero disables automatic reload.
+    #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u32).range(0..))]
+    reload_seconds: u32,
+
     /// Inject CSS from a file into each loaded page.
     #[arg(long, value_name = "PATH")]
     css_file: Option<PathBuf>,
@@ -105,6 +109,7 @@ fn main() -> Result<()> {
     let custom_css = read_optional_file(args.css_file.as_ref())?;
     let custom_js = read_optional_file(args.js_file.as_ref())?;
     let rotate_seconds = args.rotate_seconds;
+    let reload_seconds = args.reload_seconds;
     let invert_colors = args.invert_colors;
 
     let app = Application::builder()
@@ -115,6 +120,7 @@ fn main() -> Result<()> {
             app,
             &urls,
             rotate_seconds,
+            reload_seconds,
             opacity,
             invert_colors,
             &custom_css,
@@ -195,6 +201,7 @@ fn build_wallpaper(
     app: &Application,
     urls: &[String],
     rotate_seconds: u32,
+    reload_seconds: u32,
     opacity: f64,
     invert_colors: bool,
     custom_css: &Option<String>,
@@ -247,6 +254,14 @@ fn build_wallpaper(
             let next = (current.get() + 1) % sources.len();
             current.set(next);
             view.load_uri(&sources[next]);
+            gtk::glib::ControlFlow::Continue
+        });
+    }
+
+    if reload_seconds > 0 {
+        let view = webview.clone();
+        gtk::glib::timeout_add_seconds_local(reload_seconds, move || {
+            view.reload();
             gtk::glib::ControlFlow::Continue
         });
     }
