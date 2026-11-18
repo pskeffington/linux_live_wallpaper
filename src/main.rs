@@ -485,9 +485,10 @@ fn build_wallpaper(
     );
 
     let settings_path = config_path.with_file_name("settings.tsv");
-    let active_source_path = restore_saved_source
-        .then(|| config_path.with_file_name("active-source.txt"));
-    let initial_index = match active_source_path.as_deref() {
+    let active_source_path = Rc::new(
+        restore_saved_source.then(|| config_path.with_file_name("active-source.txt")),
+    );
+    let initial_index = match active_source_path.as_ref().as_deref() {
         Some(path) => load_active_source_index(path, urls)?,
         None => 0,
     };
@@ -698,14 +699,13 @@ fn build_wallpaper(
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
-let active_source_path = active_source_path.clone();
-let active_source_path = active_source_path.clone();
+        let active_source_path = active_source_path.clone();
         previous_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + list.len() - 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     {
@@ -717,13 +717,13 @@ let active_source_path = active_source_path.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
-let active_source_path = active_source_path.clone();
+        let active_source_path = active_source_path.clone();
         next_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     {
@@ -820,7 +820,7 @@ let active_source_path = active_source_path.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
-let active_source_path = active_source_path.clone();
+        let active_source_path = active_source_path.clone();
         add_button.connect_clicked(move |_| {
             let address = entry.text().trim().to_owned();
             if !is_supported_url(&address) {
@@ -853,7 +853,7 @@ let active_source_path = active_source_path.clone();
                 return;
             }
             current.set(sources.borrow().len() - 1);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
             entry.set_text("");
         });
     }
@@ -868,7 +868,7 @@ let active_source_path = active_source_path.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
-let active_source_path = active_source_path.clone();
+        let active_source_path = active_source_path.clone();
         remove_button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             if updated.len() <= 1 {
@@ -887,7 +887,7 @@ let active_source_path = active_source_path.clone();
                 return;
             }
             current.set(current.get().min(sources.borrow().len() - 1));
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     for (button, direction) in [(&move_up_button, -1isize), (&move_down_button, 1isize)] {
@@ -900,6 +900,7 @@ let active_source_path = active_source_path.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
+        let active_source_path = active_source_path.clone();
         button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             let index = current.get();
@@ -914,7 +915,7 @@ let active_source_path = active_source_path.clone();
             }
             *sources.borrow_mut() = updated;
             current.set(target as usize);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
 
@@ -962,7 +963,7 @@ let active_source_path = active_source_path.clone();
         let wallpaper = window.clone();
         let browsing = browsing.clone();
         let browse_button = browse_button.clone();
-let active_source_path = active_source_path.clone();
+        let active_source_path = active_source_path.clone();
         key_controller.connect_key_pressed(move |_, key, _, modifiers| {
             use gtk::gdk::{Key, ModifierType};
 
@@ -974,14 +975,14 @@ let active_source_path = active_source_path.clone();
                 let index = (current.get() + list.len() - 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
                 let list = sources.borrow();
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
@@ -1009,14 +1010,14 @@ let active_source_path = active_source_path.clone();
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
-let active_source_path = active_source_path.clone();
+        let active_source_path = active_source_path.clone();
         gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
             let list = sources.borrow();
             if list.len() > 1 {
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_deref().and_then(|path| path.as_deref()));
+                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
             }
             gtk::glib::ControlFlow::Continue
         });
