@@ -14,7 +14,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Implement a full-output Wayland background layer with a WebKitGTK view (not yet build-verified).
 - [x] Accept one or more web URLs from the command line.
 - [x] Add opt-in timed switching between configured URLs.
-- [x] Add configurable interval-based page reload.
+- [x] Add configurable interval-based page reload; pause elapsed time while the wallpaper surface is hidden (suspend pauses callbacks naturally).
 - [x] Reject unsupported URL schemes.
 - [x] Resolve `[[screenWidth]]` and `[[screenHeight]]` URL placeholders using monitor geometry and the GDK scale factor (fractional scaling/runtime behavior still needs verification).
 - [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request, muted audio, and host-scoped self-signed certificate trust.
