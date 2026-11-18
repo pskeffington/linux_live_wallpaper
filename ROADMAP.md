@@ -69,7 +69,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 
 - [x] Generate and commit Cargo.lock; use locked builds.
 - [x] Add an Arch dependency installer and Garuda Dr460nized deployment guide.
-- [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
+- [x] Add a Git-tracking Arch VCS PKGBUILD, generated `.SRCINFO`, and desktop launcher; a tagged release package with a verified archive checksum remains open.
 - [ ] AUR release workflow and signed tags.
 - [ ] CI: formatting, clippy, unit tests and verified build on supported Arch image.
 - [x] Add an Arch Linux CI workflow that builds against current distribution packages; latest build passed in GitHub Actions run 44283177523.
