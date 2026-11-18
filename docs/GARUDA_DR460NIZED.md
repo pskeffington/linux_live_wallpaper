@@ -27,7 +27,7 @@ cargo run --release -- --list-monitors
 cargo run --release -- --url http://FEEDER_HOST:FEEDER_PORT/ --monitor 0
 ```
 
-Replace `FEEDER_HOST` and `FEEDER_PORT` with the address configured for your local receiver. Replace monitor index `0` with the index from `--list-monitors` if you want another display. The app should use the Tar1090 dashboard's web root, not its `data/aircraft.json` endpoint.
+Replace `FEEDER_HOST` and `FEEDER_PORT` with the address configured for your local receiver. Replace monitor index `0` with the index from `--list-monitors` if you want another display. The app should use the Tar1090 dashboard's web root, not its `data/aircraft.json` endpoint. If the dashboard uses a self-signed certificate, pass `--allow-self-signed FEEDER_HOST` with an `https://` URL. This accepts only unknown-CA errors for that host during the current run; the certificate hostname must still match.
 
 For example, for a feeder with a root page at port 8504:
 
