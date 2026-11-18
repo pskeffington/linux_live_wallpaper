@@ -35,7 +35,7 @@ cargo run --release -- --list-monitors
 cargo run --release -- --url http://172.20.30.64:8504/ --monitor 0
 ```
 
-Replace `0` with the desired zero-based index from the monitor listing. The app needs the dashboard web root, not Tar1090's `data/aircraft.json` endpoint. If the feed does not load, first check that `http://172.20.30.64:8504/` opens from the same desktop session.
+Replace `0` with the desired zero-based index from the monitor listing. The deployment helper accepts the same index with `--monitor 0`, preserving the selected output when its login service starts. The app needs the dashboard web root, not Tar1090's `data/aircraft.json` endpoint. If the feed does not load, first check that `http://172.20.30.64:8504/` opens from the same desktop session.
 
 Close the foreground app with Ctrl+C. For a self-signed HTTPS dashboard, pass `--allow-self-signed HOST`; the exception accepts only unknown-CA errors for that host, and the certificate hostname must still match.
 
@@ -44,7 +44,7 @@ Close the foreground app with Ctrl+C. For a self-signed HTTPS dashboard, pass `-
 The helper builds and installs the app to `~/.local/bin/linux-live-wallpaper`, then enables a per-user systemd service:
 
 ```sh
-bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/
+bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/ --monitor 0
 ```
 
 The source is saved to the user's config directory. If `graphical-session.target` is active, the service starts immediately; otherwise, it is enabled for the next login. Review the saved sources with:
@@ -56,7 +56,7 @@ The source is saved to the user's config directory. If `graphical-session.target
 To open the interactive controller, run:
 
 ```sh
-bash scripts/garuda-deploy.sh run
+bash scripts/garuda-deploy.sh run --monitor 0
 ```
 
 The helper stops the background service first. Closing the interactive app leaves the service stopped until the next login. Manage the service with:
