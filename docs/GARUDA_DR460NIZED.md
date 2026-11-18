@@ -46,7 +46,7 @@ After the dependencies are installed, run the deployment helper from the reposit
 bash scripts/garuda-deploy.sh install --url http://FEEDER_HOST:8504/
 ```
 
-Replace `FEEDER_HOST` with the address of your Tar1090 host. The URL is added to the existing saved source list. The controller’s per-source zoom and reload interval are saved in `settings.tsv` beside `sources.txt`. If `graphical-session.target` is active, the service starts immediately; otherwise it is enabled for the next login. Review the current source list with:
+Replace `FEEDER_HOST` with the address of your Tar1090 host. The URL is added to the existing saved source list. The controller’s per-source zoom, opacity, and reload interval are saved in `settings.tsv` beside `sources.txt`. If `graphical-session.target` is active, the service starts immediately; otherwise it is enabled for the next login. Review the current source list with:
 
 ```sh
 ~/.local/bin/linux-live-wallpaper --list
