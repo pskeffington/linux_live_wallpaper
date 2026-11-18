@@ -13,7 +13,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Page zoom | Zoom page contents and remember the level per website | Controller saves and restores per-source zoom; `--zoom` supplies the default for sources without saved settings |
 | Automatic reload interval | Per-source timer, pause while hidden or suspended | Controller saves a per-source interval; `--reload-seconds` supplies the default. Automatic reload pauses while the wallpaper surface is hidden; system suspend naturally stops the timer process |
 | Multiple websites and switching | Source collection with active source | Persistent CLI and native controller add/remove/reorder, timed rotation, and Previous/Next controls; saved-source launches resume the last selected URL from `active-source.txt`, while explicit `--url` sessions remain temporary |
-| Choose display | Monitor picker and per-source assignment | CLI display listing and launch-time `--monitor INDEX`; no saved assignment or settings UI |
+| Choose display | Select output and save assignment per source | CLI display listing and launch-time `--monitor INDEX`; controller accepts a connected GDK output connector per source, persists it, and follows assignments across monitor removal/reconnection with fallback |
 | Invert colors | Optional injected stylesheet/filter | Launch-time `--invert-colors` |
 | Custom CSS and JavaScript | Explicit per-source customization fields | Launch-time files supply defaults; controller editors save CSS and JavaScript per source and apply them on page switches |
 | Custom user-agent | Per-source HTTP User-Agent override | Launch-time `--user-agent` supplies the default; the controller saves a per-source override and applies it on the next load |
