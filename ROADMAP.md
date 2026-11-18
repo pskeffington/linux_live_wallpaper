@@ -15,7 +15,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Accept one or more web URLs from the command line.
 - [x] Add opt-in timed switching between configured URLs.\n- [x] Add configurable interval-based page reload.
 - [x] Reject unsupported URL schemes.
-- [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity and muted audio.
+- [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request and muted audio.
 - [ ] Verify compilation and runtime on Arch Linux with a layer-shell-capable compositor.
 - [ ] Add graceful errors for unsupported compositor/protocol and WebKit load failures.
 - [ ] Provide a safe quit/recovery shortcut and prevent the wallpaper from obscuring desktop controls.
