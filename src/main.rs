@@ -621,8 +621,6 @@ fn build_wallpaper(
         webview.set_background_color(&gtk::gdk::RGBA::new(0.0, 0.0, 0.0, 0.0));
     }
     webview.set_is_muted(true);
-    let initial_url = resolve_url(&urls[initial_index], screen_dimensions);
-    webview.load_uri(&initial_url);
 
     let sources = Rc::new(RefCell::new(urls.to_vec()));
     let current = Rc::new(Cell::new(initial_index));
@@ -915,11 +913,27 @@ fn build_wallpaper(
     {
         let back_button = back_button.clone();
         let forward_button = forward_button.clone();
-        webview.connect_load_changed(move |view, _| {
+        let status = status.clone();
+        webview.connect_load_changed(move |view, event| {
             back_button.set_sensitive(view.can_go_back());
             forward_button.set_sensitive(view.can_go_forward());
+            if event == webkit::LoadEvent::Started {
+                let uri = view.uri().map(|uri| uri.to_string()).unwrap_or_default();
+                status.set_text(&format!("Loading {uri}"));
+            }
         });
     }
+    {
+        let status = status.clone();
+        webview.connect_load_failed(move |_, _event, failing_uri, error| {
+            let message = format!("Could not load {failing_uri}: {error}");
+            eprintln!("{message}");
+            status.set_text(&message);
+            false
+        });
+    }
+    let initial_url = resolve_url(&urls[initial_index], screen_dimensions);
+    webview.load_uri(&initial_url);
 
     {
         let path = config_path.clone();
