@@ -9,7 +9,7 @@ binary="${bin_dir}/${app_name}"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/garuda-deploy.sh <install|remove|run|status> [--url URL] [--allow-self-signed HOST]
+Usage: scripts/garuda-deploy.sh <install|remove|run|status> [--url URL] [--monitor INDEX] [--allow-self-signed HOST]
 
 install  Build and install the binary for this user, then enable its systemd user service.
 remove   Stop/disable the service and remove app files created by this script.
@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for host in "${tls_hosts[@]}"; do
+if [[ -n "$monitor_index" && ! "$monitor_index" =~ ^[0-9]+$ ]]; then\n  die "Invalid monitor index: $monitor_index"\nfi\n\nfor host in "${tls_hosts[@]}"; do
   [[ "$host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || die "Invalid TLS host: $host"
 done
 
