@@ -662,6 +662,7 @@ fn build_wallpaper(
     }
     let base_css = Rc::new(base_css);
     let web_settings = webkit::Settings::new();
+    web_settings.set_enable_developer_extras(true);
     apply_source_customizations(&content_manager, &base_css, &initial_settings, &web_settings);
     let network_session = webkit::NetworkSession::default()
         .context("could not create a WebKit network session")?;
@@ -1134,6 +1135,15 @@ fn build_wallpaper(
             menu.append(&webkit::ContextMenuItem::from_gaction(
                 &zoom_out,
                 "Zoom Out",
+                None,
+            ));
+
+            let inspect = gtk::gio::SimpleAction::new("wallpaper-inspect-page", None);
+            let inspected_view = view.clone();
+            inspect.connect_activate(move |_, _| inspected_view.inspector().show());
+            menu.append(&webkit::ContextMenuItem::from_gaction(
+                &inspect,
+                "Inspect Page",
                 None,
             ));
             false
