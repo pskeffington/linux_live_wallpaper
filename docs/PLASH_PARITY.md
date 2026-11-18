@@ -7,7 +7,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Feature | Linux implementation target | Status |
 |---|---|---|
 | Remote or local website | WebKitGTK URL/file source | CLI supports http, https and file URLs |
-| Screen-size URL placeholders | Substitute selected display dimensions in a URL | `[[screenWidth]]` and `[[screenHeight]]` are resolved for the selected monitor (default index 0); values use GDK monitor geometry and need HiDPI/runtime verification |
+| Screen-size URL placeholders | Substitute selected display dimensions in a URL | `[[screenWidth]]` and `[[screenHeight]]` resolve from selected monitor geometry multiplied by its GDK scale factor (default monitor index 0); fractional-scaling and runtime behavior need verification |
 | Self-signed certificates | Host-scoped trust exception | Opt-in `--allow-self-signed HOST` accepts only unknown-CA errors for the named host during this run |
 | Browsing mode | Temporarily enable pointer/keyboard input and navigation controls | Native controller toggles pointer input and on-demand keyboard focus, with Back/Forward browser history buttons |
 | Page zoom | Zoom page contents and remember the level per website | Controller saves and restores per-source zoom; `--zoom` supplies the default for sources without saved settings |
