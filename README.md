@@ -10,7 +10,7 @@ Early prototype. The current design targets GTK 4, WebKitGTK 6, and GTK Layer Sh
 
 ```sh
 sudo pacman -S --needed base-devel cargo gtk4 gtk4-layer-shell webkitgtk-6.0
-cargo build --release
+cargo build --release --locked
 ```
 
 Add and inspect persistent sources:
@@ -22,12 +22,20 @@ cargo run -- --list
 cargo run -- --remove https://news.example
 ```
 
-Start the wallpaper from saved sources, or provide temporary sources directly. Repeat `--url` for each source:
+Start the wallpaper from saved sources or provide temporary sources directly. Repeat `--url` for each source:
 
 ```sh
 cargo run --release
 cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300
 ```
+
+Per-run page options include a custom stylesheet, script, color inversion, and surface opacity:
+
+```sh
+cargo run --release -- --url https://example.com --css-file wallpaper.css --js-file wallpaper.js --invert-colors --opacity 0.85
+```
+
+Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. Opacity must be between 0.0 and 1.0.
 
 Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
