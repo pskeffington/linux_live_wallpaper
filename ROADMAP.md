@@ -38,7 +38,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] List available displays and select one by its zero-based GDK monitor index.
 - [ ] Persist per-source display assignments and handle multi-monitor hotplug.
 - [x] Click-through wallpaper surface with a native browsing-mode toggle and on-demand keyboard focus.
-- [ ] In-page navigation controls and remembered browsing preferences.
+- [x] Add WebKit Back/Forward history controls to the native controller.
+- [ ] Remember browsing preferences and add navigation-state affordances.
 - [x] Add opt-in battery-aware hiding based on Linux power-supply status.
 - [ ] Add remaining parity items, including image aspect-fill and richer power-management integration.
 
