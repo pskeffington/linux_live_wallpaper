@@ -1044,6 +1044,102 @@ fn build_wallpaper(
         });
     }
     {
+        let browsing = browsing.clone();
+        let settings = source_settings.clone();
+        let settings_path = settings_path.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let zoom_entry = zoom_entry.clone();
+        let status = status.clone();
+        webview.connect_context_menu(move |view, menu, _, _| {
+            if !browsing.get() {
+                return false;
+            }
+
+            let back = gtk::gio::SimpleAction::new("wallpaper-back", None);
+            back.set_enabled(view.can_go_back());
+            let back_view = view.clone();
+            back.connect_activate(move |_, _| back_view.go_back());
+            menu.append(&webkit::ContextMenuItem::from_gaction(
+                &back,
+                "Back",
+                None,
+            ));
+
+            let forward = gtk::gio::SimpleAction::new("wallpaper-forward", None);
+            forward.set_enabled(view.can_go_forward());
+            let forward_view = view.clone();
+            forward.connect_activate(move |_, _| forward_view.go_forward());
+            menu.append(&webkit::ContextMenuItem::from_gaction(
+                &forward,
+                "Forward",
+                None,
+            ));
+
+            let reload = gtk::gio::SimpleAction::new("wallpaper-reload", None);
+            let reload_view = view.clone();
+            reload.connect_activate(move |_, _| reload_view.reload());
+            menu.append(&webkit::ContextMenuItem::from_gaction(
+                &reload,
+                "Reload",
+                None,
+            ));
+
+            let zoom_in = gtk::gio::SimpleAction::new("wallpaper-zoom-in", None);
+            let zoom_view = view.clone();
+            let zoom_settings = settings.clone();
+            let zoom_path = settings_path.clone();
+            let zoom_sources = sources.clone();
+            let zoom_current = current.clone();
+            let zoom_entry = zoom_entry.clone();
+            let zoom_status = status.clone();
+            zoom_in.connect_activate(move |_, _| {
+                adjust_zoom(
+                    &zoom_view,
+                    1.1,
+                    &zoom_settings,
+                    &zoom_path,
+                    &zoom_sources,
+                    &zoom_current,
+                    &zoom_entry,
+                    &zoom_status,
+                );
+            });
+            menu.append(&webkit::ContextMenuItem::from_gaction(
+                &zoom_in,
+                "Zoom In",
+                None,
+            ));
+
+            let zoom_out = gtk::gio::SimpleAction::new("wallpaper-zoom-out", None);
+            let zoom_view = view.clone();
+            let zoom_settings = settings.clone();
+            let zoom_path = settings_path.clone();
+            let zoom_sources = sources.clone();
+            let zoom_current = current.clone();
+            let zoom_entry = zoom_entry.clone();
+            let zoom_status = status.clone();
+            zoom_out.connect_activate(move |_, _| {
+                adjust_zoom(
+                    &zoom_view,
+                    1.0 / 1.1,
+                    &zoom_settings,
+                    &zoom_path,
+                    &zoom_sources,
+                    &zoom_current,
+                    &zoom_entry,
+                    &zoom_status,
+                );
+            });
+            menu.append(&webkit::ContextMenuItem::from_gaction(
+                &zoom_out,
+                "Zoom Out",
+                None,
+            ));
+            false
+        });
+    }
+    {
         let back_button = back_button.clone();
         let forward_button = forward_button.clone();
         let status = status.clone();
@@ -1482,6 +1578,42 @@ fn build_wallpaper(
         }
     }
     Ok(())
+}
+
+fn adjust_zoom(
+    view: &webkit::WebView,
+    factor: f64,
+    settings: &RefCell<HashMap<String, SourceSettings>>,
+    settings_path: &PathBuf,
+    sources: &RefCell<Vec<String>>,
+    current: &Cell<usize>,
+    zoom_entry: &gtk::Entry,
+    status: &gtk::Label,
+) {
+    let zoom = (view.property::<f64>("zoom-level") * factor).clamp(0.25, 5.0);
+    view.set_zoom_level(zoom);
+    zoom_entry.set_text(&zoom.to_string());
+
+    let address = sources.borrow().get(current.get()).cloned();
+    let Some(address) = address else {
+        return;
+    };
+    let result = {
+        let mut all_settings = settings.borrow_mut();
+        match all_settings.get_mut(&address) {
+            Some(page) => {
+                page.zoom = zoom;
+                save_source_settings(settings_path, &all_settings)
+            }
+            None => return,
+        }
+    };
+    match result {
+        Ok(()) => status.set_text(&format!("Saved page zoom at {:.0}%.", zoom * 100.0)),
+        Err(error) => {
+            status.set_text(&format!("Changed page zoom, but could not save it: {error:#}"));
+        }
+    }
 }
 
 fn load_current(
