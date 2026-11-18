@@ -4,6 +4,7 @@ set -euo pipefail
 packages=(
   base-devel
   cargo
+  git
   gtk4
   gtk4-layer-shell
   webkitgtk-6.0
@@ -48,8 +49,8 @@ case "${1-}" in
     ;;
 esac
 
-if [[ ! -e /etc/arch-release ]]; then
-  printf '%s\n' "This installer is intended for Arch Linux and Arch-based distributions." >&2
+if ! command -v pacman >/dev/null 2>&1 || [[ ! -e /etc/arch-release ]]; then
+  printf '%s\n' "This installer requires Arch Linux or an Arch-based distribution with pacman." >&2
   exit 1
 fi
 
@@ -65,4 +66,12 @@ if [[ ! -t 0 || ! -t 1 ]]; then
   exit 1
 fi
 
-sudo pacman -S --needed "${packages[@]}"
+if (( EUID == 0 )); then
+  pacman -S --needed "${packages[@]}"
+else
+  if ! command -v sudo >/dev/null 2>&1; then
+    printf '%s\n' "sudo is required when this script is not run as root." >&2
+    exit 1
+  fi
+  sudo pacman -S --needed "${packages[@]}"
+fi
