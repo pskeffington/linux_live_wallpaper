@@ -96,7 +96,7 @@ EOF
     ;;
   remove)
     systemctl --user disable --now linux-live-wallpaper.service 2>/dev/null || true
-    rm -f "$unit_file" "$desktop_file" "$binary"
+    rm -f "$unit_file" "$binary"
     systemctl --user daemon-reload 2>/dev/null || true
     printf 'Removed the user service and installed binary. Saved sources are preserved.\n'
     ;;
