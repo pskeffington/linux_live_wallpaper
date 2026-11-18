@@ -33,6 +33,10 @@ struct Args {
     #[arg(long, value_name = "PATH")]
     config: Option<PathBuf>,
 
+    /// Print available displays with their zero-based GDK indexes and exit.
+    #[arg(long)]
+    list_monitors: bool,
+
     /// Display index to use (zero-based, ordered by GDK).
     #[arg(long, value_name = "INDEX")]
     monitor: Option<u32>,
@@ -68,6 +72,42 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
+    if args.list_monitors {
+        let app = Application::builder()
+            .application_id("io.github.pskeffington.LinuxLiveWallpaper")
+            .build();
+        app.connect_activate(|app| {
+            match gtk::gdk::Display::default() {
+                Some(display) => {
+                    let monitors = display.monitors();
+                    for index in 0..monitors.n_items() {
+                        if let Some(monitor) = monitors
+                            .item(index)
+                            .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())
+                        {
+                            let connector = monitor.connector().unwrap_or_default();
+                            let model = monitor.model().unwrap_or_default();
+                            let geometry = monitor.geometry();
+                            println!(
+                                "{index}: {} {} ({}x{} at {},{})",
+                                connector,
+                                model,
+                                geometry.width(),
+                                geometry.height(),
+                                geometry.x(),
+                                geometry.y()
+                            );
+                        }
+                    }
+                }
+                None => eprintln!("No GDK display is available."),
+            }
+            app.quit();
+        });
+        app.run();
+        return Ok(());
+    }
+
     let config_path = args.config.clone().map(Ok).unwrap_or_else(default_config_path)?;
     let mut saved_sources = load_sources(&config_path)?;
 
