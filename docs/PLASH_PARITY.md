@@ -20,7 +20,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Mute audio | WebKit media policy | Muted by default |
 | Aspect-fill single image | Image-source mode with crop-to-fill | Not implemented |
 | Hide tray/menu icon | Optional background service indicator | No tray/service UI yet |
-| Shortcuts / automation | CLI and desktop action interface | CLI source management and launch flags; no desktop actions |
+| Shortcuts / automation | CLI and desktop action interface | Focused controller shortcuts and CLI commands; no desktop-wide shortcut integration |
 | Share extension | Linux browser share handler or URL import | Not implemented |
 
 Plash documents that it shows only one website at a time; multiple simultaneous websites are out of scope. It describes multi-display support as choosing one display, with separate websites per display planned. This project should preserve those semantics by default rather than silently claiming broader parity.
