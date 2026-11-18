@@ -1,64 +1,65 @@
 # Garuda Dr460nized deployment
 
-Garuda Dr460nized uses KDE Plasma. This project’s first backend is GTK 4 with GTK Layer Shell on Wayland. The upstream gtk4-layer-shell project lists KDE Plasma on Wayland among supported compositors, but this application still needs runtime validation on the installed KWin version. X11 is not supported by this prototype.
+This guide targets Garuda Dr460nized's KDE Plasma desktop on Wayland. The application uses GTK 4, WebKitGTK 6, and GTK Layer Shell to place web content as a wallpaper. KWin must expose the Wayland layer-shell protocol; the current prototype has not yet been runtime-validated on a Garuda machine. X11 is unsupported.
 
-## Install dependencies
+## Prepare Garuda
 
-Run from the repository root in a terminal:
+Update the rolling system through Garuda's normal update workflow before installing build dependencies. Then open a terminal in the repository and install the project packages:
 
 ```sh
 bash scripts/install-arch-deps.sh
 ```
 
-The script installs `base-devel`, `cargo`, `git`, `gtk4`, `gtk4-layer-shell`, and `webkitgtk-6.0` with `pacman -S --needed`. Review and confirm the package transaction in your terminal. To preview the command without changing the system:
+The script installs `base-devel`, `cargo`, `gtk4`, `gtk4-layer-shell`, `wayland-utils`, and `webkitgtk-6.0` through pacman. It does not run a system upgrade or change desktop settings. Preview the package command first with:
 
 ```sh
 bash scripts/install-arch-deps.sh --dry-run
 ```
 
-## Build and run
-
-Confirm the current session is Wayland, then build and open a Tar1090 web root:
+Log in to the **Plasma (Wayland)** session at SDDM. Check the session and protocol:
 
 ```sh
-test "${XDG_SESSION_TYPE:-}" = wayland
+printf 'session=%s\n' "${XDG_SESSION_TYPE:-unset}"
+wayland-info | rg zwlr_layer_shell_v1
+```
+
+The session should report `wayland`, and the protocol query should return `zwlr_layer_shell_v1`. If the protocol is absent, this backend cannot create the wallpaper layer in that session.
+
+## Try the live Tar1090 feed
+
+The configured test feed is `172.20.30.64:8504`. Build the release binary, list monitor indices, then run the dashboard on the chosen monitor:
+
+```sh
 cargo build --release --locked
 cargo run --release -- --list-monitors
-cargo run --release -- --url http://FEEDER_HOST:FEEDER_PORT/ --monitor 0
+cargo run --release -- --url http://172.20.30.64:8504/ --monitor 0
 ```
 
-Replace `FEEDER_HOST` and `FEEDER_PORT` with the address configured for your local receiver. Replace monitor index `0` with the index from `--list-monitors` if you want another display. The app should use the Tar1090 dashboard's web root, not its `data/aircraft.json` endpoint. If the dashboard uses a self-signed certificate, use an `https://` URL and pass `--allow-self-signed FEEDER_HOST` to the helper. This accepts only unknown-CA errors for that host; the certificate hostname must still match. The helper carries this explicit setting into the login service.
+Replace `0` with the desired zero-based index from the monitor listing. The app needs the dashboard web root, not Tar1090's `data/aircraft.json` endpoint. If the feed does not load, first check that `http://172.20.30.64:8504/` opens from the same desktop session.
 
-For example, for a feeder with a root page at port 8504:
-
-```sh
-cargo run --release -- --url http://FEEDER_HOST:8504/
-```
-
-Close the foreground app with Ctrl+C. For per-user login startup, use the deployment helper below.
-
+Close the foreground app with Ctrl+C. For a self-signed HTTPS dashboard, pass `--allow-self-signed HOST`; the exception accepts only unknown-CA errors for that host, and the certificate hostname must still match.
 
 ## Install and start at login
 
-After the dependencies are installed, run the deployment helper from the repository root. It builds the release binary, installs it at `~/.local/bin/linux-live-wallpaper`, and enables a per-user systemd service for the graphical session:
+The helper builds and installs the app to `~/.local/bin/linux-live-wallpaper`, then enables a per-user systemd service:
 
 ```sh
-bash scripts/garuda-deploy.sh install --url http://FEEDER_HOST:8504/
+bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/
 ```
 
-For an HTTPS Tar1090 endpoint with a self-signed certificate, use:
-
-```sh
-bash scripts/garuda-deploy.sh install --url https://FEEDER_HOST:8504/ --allow-self-signed FEEDER_HOST
-```
-
-Replace `FEEDER_HOST` with the address of your Tar1090 host. The URL is added to the existing saved source list. The controller’s per-source zoom, opacity, and reload interval are saved in `settings.tsv` beside `sources.txt`. If `graphical-session.target` is active, the service starts immediately; otherwise it is enabled for the next login. Review the current source list with:
+The source is saved to the user's config directory. If `graphical-session.target` is active, the service starts immediately; otherwise, it is enabled for the next login. Review the saved sources with:
 
 ```sh
 ~/.local/bin/linux-live-wallpaper --list
 ```
 
-To open the interactive controller for the current session, run `bash scripts/garuda-deploy.sh run`. Add `--allow-self-signed FEEDER_HOST` to that command too when the saved HTTPS dashboard uses a self-signed certificate. The helper stops the background service first, preventing two wallpaper surfaces from being created. Closing the interactive app leaves the service stopped until the next login. Manage it with:
+To open the interactive controller, run:
+
+```sh
+bash scripts/garuda-deploy.sh run
+```
+
+The helper stops the background service first. Closing the interactive app leaves the service stopped until the next login. Manage the service with:
 
 ```sh
 bash scripts/garuda-deploy.sh status
@@ -66,24 +67,18 @@ systemctl --user stop linux-live-wallpaper.service
 systemctl --user start linux-live-wallpaper.service
 ```
 
-Remove the service and installed binary with `bash scripts/garuda-deploy.sh remove`; the saved source list is preserved. This helper modifies only files under your home directory and uses systemd user commands; it does not need sudo. The installer imports the active `DISPLAY`, `WAYLAND_DISPLAY`, session type, runtime directory, and D-Bus address into systemd’s user manager. The service is ordered after `graphical-session.target` and is conditioned on a Wayland session. If it does not start, inspect `systemctl --user status linux-live-wallpaper.service`, `journalctl --user -u linux-live-wallpaper.service`, and `systemctl --user show-environment`.
-
-## Layer-shell support
-
-GTK Layer Shell requires a compositor implementing `zwlr_layer_shell_v1`. The upstream [gtk4-layer-shell supported-compositors list](https://github.com/wmww/gtk4-layer-shell#supported-compositors) includes KDE Plasma on Wayland. Runtime placement and stacking still need to be checked on the particular Garuda/KWin session; a successful compile does not prove the wallpaper sits behind desktop icons.
-
-To inspect the session and available Wayland protocols, install `wayland-utils` if needed and run:
+Remove the service and installed binary with `bash scripts/garuda-deploy.sh remove`. The saved sources remain. The helper changes files only under your home directory and uses systemd user commands; it does not need sudo. It imports the active Wayland and D-Bus session variables into the user manager. If startup fails, inspect:
 
 ```sh
-printf 'session=%s\n' "${XDG_SESSION_TYPE:-unset}"
-wayland-info | rg zwlr_layer_shell_v1
+systemctl --user status linux-live-wallpaper.service
+journalctl --user -u linux-live-wallpaper.service
+systemctl --user show-environment
 ```
 
-If the protocol is absent, the app cannot create a background layer in that session. Use a Wayland session with layer-shell support; do not expect the prototype to work under X11.
+## Garuda and KDE notes
 
-## Known Garuda-specific limits
-
-- The Dr460nized theme does not alter the layer-shell protocol, but theme colors can affect transparent surfaces and GTK controls.
-- The app uses WebKitGTK from the Arch package repository and does not bundle a private browser engine.
+- GTK Layer Shell requires a compositor implementing `zwlr_layer_shell_v1`; protocol presence does not guarantee correct placement behind desktop icons.
+- The Dr460nized theme can affect GTK controls and transparent surfaces; it does not change the layer-shell protocol.
+- The application uses Garuda's system WebKitGTK package and does not bundle a browser engine.
 - Transparent output depends on both WebKitGTK and KWin alpha handling.
-- GPU acceleration, multiple monitors, sleep/wake behavior, autostart, and persistent per-source display settings have not been validated on this machine.
+- Multiple displays, GPU acceleration, sleep/wake, and startup behavior still need runtime validation on Garuda/KWin.
