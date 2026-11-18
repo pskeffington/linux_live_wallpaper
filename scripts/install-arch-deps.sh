@@ -4,9 +4,9 @@ set -euo pipefail
 packages=(
   base-devel
   cargo
-  git
   gtk4
   gtk4-layer-shell
+  wayland-utils
   webkitgtk-6.0
 )
 
@@ -14,16 +14,18 @@ usage() {
   cat <<'EOF'
 Usage: scripts/install-arch-deps.sh [--dry-run] [--help]
 
-Install the system packages needed to build and run linux-live-wallpaper
-on Arch Linux and Arch-based distributions.
+Install build and runtime packages for linux-live-wallpaper on Arch Linux,
+including Garuda Dr460nized. The Wayland tools package is included so the
+layer-shell protocol can be checked before launch.
 
 Options:
   --dry-run  Print the pacman command without changing the system.
   --help     Show this help.
 
-This script does not install the application, change desktop settings, or
-start the wallpaper. Review the package list, then approve pacman in your
-terminal when prompted.
+This script does not upgrade the system, install the application, change
+desktop settings, or start the wallpaper. On Garuda, keep the rolling system
+updated with Garuda's normal update tool before installing packages.
+Review the package list; pacman will ask for confirmation.
 EOF
 }
 
