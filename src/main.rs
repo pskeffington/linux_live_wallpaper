@@ -299,7 +299,7 @@ fn build_wallpaper(
     let mut css = custom_css.clone().unwrap_or_default();
     if invert_colors {
         css.push_str(
-            "\nhtml { filter: invert(1) hue-rotate(180deg) !important; }\n             img, video, canvas, picture, svg image { filter: invert(1) hue-rotate(180deg) !important; }\n",
+            "\\nhtml { filter: invert(1) hue-rotate(180deg) !important; }\\nimg, video, canvas, picture, svg image { filter: invert(1) hue-rotate(180deg) !important; }\\n",
         );
     }
     if !css.is_empty() {
@@ -339,25 +339,8 @@ fn build_wallpaper(
     webview.set_is_muted(true);
     webview.load_uri(&urls[0]);
 
-    if rotate_seconds > 0 && urls.len() > 1 {
-        let sources = Rc::new(urls.to_vec());
-        let current = Rc::new(Cell::new(0usize));
-        let view = webview.clone();
-        gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
-            let next = (current.get() + 1) % sources.len();
-            current.set(next);
-            view.load_uri(&sources[next]);
-            gtk::glib::ControlFlow::Continue
-        });
-    }
-
-    if reload_seconds > 0 {
-        let view = webview.clone();
-        gtk::glib::timeout_add_seconds_local(reload_seconds, move || {
-            view.reload();
-            gtk::glib::ControlFlow::Continue
-        });
-    }
+    let sources = Rc::new(urls.to_vec());
+    let current = Rc::new(Cell::new(0usize));
 
     let window = ApplicationWindow::builder()
         .application(app)
@@ -398,18 +381,161 @@ fn build_wallpaper(
     window.set_keyboard_mode(KeyboardMode::None);
     window.set_exclusive_zone(-1);
     window.present();
+    set_wallpaper_interactive(&window, false);
+
+    let status = gtk::Label::new(Some(&sources[0]));
+    status.set_wrap(true);
+    status.set_xalign(0.0);
+
+    let controls = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    controls.set_margin_top(12);
+    controls.set_margin_bottom(12);
+    controls.set_margin_start(12);
+    controls.set_margin_end(12);
+    controls.append(&status);
+
+    let navigation = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    let previous_button = gtk::Button::with_label("Previous");
+    let next_button = gtk::Button::with_label("Next");
+    let reload_button = gtk::Button::with_label("Reload");
+    navigation.append(&previous_button);
+    navigation.append(&next_button);
+    navigation.append(&reload_button);
+    controls.append(&navigation);
+
+    let browse_button = gtk::Button::with_label("Enable browsing mode");
+    controls.append(&browse_button);
+    let quit_button = gtk::Button::with_label("Quit wallpaper");
+    controls.append(&quit_button);
+
+    let controls_window = ApplicationWindow::builder()
+        .application(app)
+        .title("Linux Live Wallpaper")
+        .default_width(360)
+        .child(&controls)
+        .build();
+
+    {
+        let view = webview.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let status = status.clone();
+        previous_button.connect_clicked(move |_| {
+            let index = (current.get() + sources.len() - 1) % sources.len();
+            current.set(index);
+            view.load_uri(&sources[index]);
+            status.set_text(&sources[index]);
+        });
+    }
+    {
+        let view = webview.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let status = status.clone();
+        next_button.connect_clicked(move |_| {
+            let index = (current.get() + 1) % sources.len();
+            current.set(index);
+            view.load_uri(&sources[index]);
+            status.set_text(&sources[index]);
+        });
+    }
+    {
+        let view = webview.clone();
+        reload_button.connect_clicked(move |_| view.reload());
+    }
+
+    let browsing = Rc::new(Cell::new(false));
+    {
+        let wallpaper = window.clone();
+        let browsing = browsing.clone();
+        browse_button.connect_clicked(move |button| {
+            let enabled = !browsing.get();
+            browsing.set(enabled);
+            set_wallpaper_interactive(&wallpaper, enabled);
+            button.set_label(if enabled {
+                "Disable browsing mode"
+            } else {
+                "Enable browsing mode"
+            });
+        });
+    }
+    {
+        let app = app.clone();
+        quit_button.connect_clicked(move |_| app.quit());
+    }
+    {
+        let app = app.clone();
+        let wallpaper = window.clone();
+        let browsing = browsing.clone();
+        controls_window.connect_close_request(move |_| {
+            set_wallpaper_interactive(&wallpaper, false);
+            browsing.set(false);
+            app.quit();
+            gtk::glib::Propagation::Proceed
+        });
+    }
+
+    if rotate_seconds > 0 && sources.len() > 1 {
+        let sources = sources.clone();
+        let current = current.clone();
+        let view = webview.clone();
+        let status = status.clone();
+        gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
+            let index = (current.get() + 1) % sources.len();
+            current.set(index);
+            view.load_uri(&sources[index]);
+            status.set_text(&sources[index]);
+            gtk::glib::ControlFlow::Continue
+        });
+    }
+
+    if reload_seconds > 0 {
+        let view = webview.clone();
+        gtk::glib::timeout_add_seconds_local(reload_seconds, move || {
+            view.reload();
+            gtk::glib::ControlFlow::Continue
+        });
+    }
 
     if deactivate_on_battery {
         let wallpaper_window = window.clone();
+        let controls_window = controls_window.clone();
         gtk::glib::timeout_add_seconds_local(30, move || {
-            wallpaper_window.set_visible(!is_on_battery());
+            let visible = !is_on_battery();
+            wallpaper_window.set_visible(visible);
+            controls_window.set_visible(visible);
             gtk::glib::ControlFlow::Continue
         });
         if is_on_battery() {
             window.set_visible(false);
+            controls_window.set_visible(false);
         }
     }
+
+    controls_window.present();
     Ok(())
+}
+
+fn set_wallpaper_interactive(window: &ApplicationWindow, enabled: bool) {
+    if enabled {
+        window.set_keyboard_mode(KeyboardMode::OnDemand);
+    } else {
+        window.set_keyboard_mode(KeyboardMode::None);
+    }
+
+    if let Some(surface) = window.surface() {
+        let region = if enabled {
+            gtk::cairo::Region::create_rectangle(&gtk::cairo::RectangleInt::new(
+                0,
+                0,
+                window.width().max(1),
+                window.height().max(1),
+            ))
+        } else {
+            gtk::cairo::Region::create()
+        };
+        surface.set_input_region(&region);
+    }
 }
 
 fn is_on_battery() -> bool {
