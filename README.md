@@ -39,13 +39,13 @@ cargo run --release -- --url https://one.example --url https://two.example --rot
 
 A native controller window opens with Previous, Next, Reload, browsing-mode, browser history, and persistent source controls. Add, remove, and reorder sources there; changes are saved to the source list. The controller also saves zoom, opacity, and automatic reload interval for each page. The wallpaper surface is click-through by default; browsing mode enables pointer input and on-demand keyboard focus; Back and Forward navigate the active page’s WebKit history. With the controller focused, use Alt+Left/Right to switch sources, Ctrl+R to reload, and Ctrl+B to toggle browsing mode. Closing the controller exits the wallpaper.
 
-Per-run page options include custom CSS and JavaScript, color inversion, surface opacity, page zoom, and a custom user-agent:
+Per-run page options include custom CSS and JavaScript, color inversion, surface opacity, page zoom, a custom user-agent, and a host-scoped exception for self-signed TLS certificates:
 
 ```sh
-cargo run --release -- --url https://example.com --css-file wallpaper.css --js-file wallpaper.js --invert-colors --opacity 0.85 --zoom 1.15 --user-agent 'Mozilla/5.0' --transparent-background --deactivate-on-battery
+cargo run --release -- --url https://example.com --css-file wallpaper.css --js-file wallpaper.js --invert-colors --opacity 0.85 --zoom 1.15 --user-agent 'Mozilla/5.0' --allow-self-signed dashboard.example --transparent-background --deactivate-on-battery
 ```
 
-Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. Standalone image URLs are styled to fill the wallpaper viewport while preserving aspect ratio. Opacity must be between 0.0 and 1.0.
+Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. `--allow-self-signed HOST` is opt-in and accepts only unknown-certificate-authority errors for that host; hostname mismatches, expired certificates, and other TLS errors still fail. Standalone image URLs are styled to fill the wallpaper viewport while preserving aspect ratio. Opacity must be between 0.0 and 1.0.
 
 Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Per-source zoom, opacity, and reload settings are stored alongside them in `settings.tsv`. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
