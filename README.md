@@ -53,7 +53,7 @@ cargo run --release -- --url http://feeder-host:port/
 - Restore wallpaper state after login.
 - Ship reproducible Arch package metadata and document compositor capabilities.
 
-See [ROADMAP.md](ROADMAP.md) and [docs/PLASH_PARITY.md](docs/PLASH_PARITY.md) for feature scope and platform constraints.
+See [ROADMAP.md](ROADMAP.md), [docs/PLASH_PARITY.md](docs/PLASH_PARITY.md), and the [Garuda Dr460nized deployment guide](docs/GARUDA_DR460NIZED.md) for feature scope and platform constraints.
 
 ## License
 
