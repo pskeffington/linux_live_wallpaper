@@ -24,7 +24,10 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Aspect-fill single image | Image-source mode with crop-to-fill | CSS targets standalone image documents and fills the wallpaper viewport with `object-fit: cover`; not runtime-verified |
 | Hide menu-bar icon | Optional background service indicator | No tray/service UI exists yet, so there is no icon to hide |
 | Global keyboard shortcuts | Reload, next, previous, random source, browsing mode, and app on/off actions | Focused controller shortcuts cover reload, previous/next, browsing mode, and quit; no global registration, random-source action, or show/hide toggle |
-| Shortcuts automation | Automatable actions for wallpaper control | CLI commands exist; no desktop automation provider or action interface |\n| Scriptable | Scriptable app integration | Not implemented; custom page JavaScript is separate from app automation |\n| Share extension | Linux browser share handler or URL import | Not implemented |\n| New-window links | Option to open external links in the default browser, with a modifier-key route into the wallpaper page | No explicit external-link policy or modifier-key navigation is implemented |
+| Shortcuts automation | Automatable actions for wallpaper control | CLI commands exist; no desktop automation provider or action interface |
+| Scriptable | Scriptable app integration | Not implemented; custom page JavaScript is separate from app automation |
+| Share extension | Linux browser share handler or URL import | Not implemented |
+| New-window links | Option to open external links in the default browser, with a modifier-key route into the wallpaper page | No explicit external-link policy or modifier-key navigation is implemented |
 | Web inspector (Linux-specific) | WebKit Inspector with JavaScript debugger | `Inspect Page` action in browsing-mode context menu; Arch compile verified, window behavior not runtime-tested |
 
 Plash documents that it shows only one website at a time; multiple simultaneous websites are out of scope. It describes multi-display support as choosing one display, with separate websites per display planned. This project should preserve those semantics by default rather than silently claiming broader parity.
