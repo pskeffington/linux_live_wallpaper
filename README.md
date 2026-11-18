@@ -37,7 +37,7 @@ cargo run --release
 cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300 --reload-seconds 900 --monitor 0
 ```
 
-A native controller window opens with Previous, Next, Reload, browsing-mode, and persistent source controls. Add, remove, and reorder sources there; changes are saved to the source list. The wallpaper surface is click-through by default; browsing mode enables pointer input and on-demand keyboard focus. With the controller focused, use Alt+Left/Right to switch sources, Ctrl+R to reload, and Ctrl+B to toggle browsing mode. Closing the controller exits the wallpaper.
+A native controller window opens with Previous, Next, Reload, browsing-mode, and persistent source controls. Add, remove, and reorder sources there; changes are saved to the source list. The controller also saves a zoom factor and automatic reload interval for each page. The wallpaper surface is click-through by default; browsing mode enables pointer input and on-demand keyboard focus. With the controller focused, use Alt+Left/Right to switch sources, Ctrl+R to reload, and Ctrl+B to toggle browsing mode. Closing the controller exits the wallpaper.
 
 Per-run page options include custom CSS and JavaScript, color inversion, surface opacity, page zoom, and a custom user-agent:
 
@@ -47,7 +47,7 @@ cargo run --release -- --url https://example.com --css-file wallpaper.css --js-f
 
 Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. Opacity must be between 0.0 and 1.0.
 
-Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
+Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Per-source zoom and reload settings are stored alongside them in `settings.tsv`. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
 List displays with `cargo run --release -- --list-monitors`, then select one by its zero-based GDK index with `--monitor INDEX`. Monitor ordering can change when displays are reconnected.\n\nFor a local Tar1090 dashboard, point the wallpaper at its web root:
 
