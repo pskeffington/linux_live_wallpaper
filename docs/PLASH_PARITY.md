@@ -18,7 +18,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Transparent background | Web view transparency where supported | Launch-time `--transparent-background`; actual alpha rendering depends on compositor support |
 | Deactivate on battery | Power state integration, with manual override | Opt-in `--deactivate-on-battery` polls Linux battery status every 30 seconds and hides the window while discharging |
 | Mute audio | WebKit media policy | Muted by default |
-| Aspect-fill single image | Image-source mode with crop-to-fill | Not implemented |
+| Aspect-fill single image | Image-source mode with crop-to-fill | CSS targets standalone image documents and fills the wallpaper viewport with `object-fit: cover`; not runtime-verified |
 | Hide tray/menu icon | Optional background service indicator | No tray/service UI yet |
 | Shortcuts / automation | CLI and desktop action interface | Focused controller shortcuts and CLI commands; no desktop-wide shortcut integration |
 | Share extension | Linux browser share handler or URL import | Not implemented |
