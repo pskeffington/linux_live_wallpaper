@@ -25,6 +25,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Hide tray/menu icon | Optional background service indicator | No tray/service UI yet |
 | Shortcuts / automation | CLI and desktop action interface | Focused controller shortcuts and CLI commands; no desktop-wide shortcut integration |
 | Share extension | Linux browser share handler or URL import | Not implemented |
+| Web inspector (Linux-specific) | WebKit Inspector with JavaScript debugger | `Inspect Page` action in browsing-mode context menu; Arch compile verified, window behavior not runtime-tested |
 
 Plash documents that it shows only one website at a time; multiple simultaneous websites are out of scope. It describes multi-display support as choosing one display, with separate websites per display planned. This project should preserve those semantics by default rather than silently claiming broader parity.
 
