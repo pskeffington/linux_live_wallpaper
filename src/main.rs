@@ -886,8 +886,6 @@ fn build_wallpaper(
         let selected_monitor = selected_monitor.clone();
         let screen_dimensions = screen_dimensions.clone();
         let active_source_path = active_source_path.clone();
-        let sources = sources.clone();
-        let current = current.clone();
         save_settings_button.connect_clicked(move |_| {
             let parsed_zoom = match parse_zoom(zoom_entry.text().trim()) {
                 Ok(value) => value,
@@ -952,7 +950,6 @@ fn build_wallpaper(
                 status.set_text(&format!("Could not save page settings: {error}"));
                 return;
             }
-            let page = settings.borrow()[&address].clone();
             load_current(
                 &view,
                 &sources,
@@ -974,10 +971,8 @@ fn build_wallpaper(
                 &launch_monitor,
                 &selected_monitor,
                 &screen_dimensions,
-                screen_dimensions.get(),
                 active_source_path.as_ref().as_deref(),
             );
-            view.reload();
             status.set_text("Saved settings for this page.");
         });
     }
