@@ -246,6 +246,35 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn monitor_at(display: &gtk::gdk::Display, index: u32) -> Option<gtk::gdk::Monitor> {
+    display
+        .monitors()
+        .item(index)
+        .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())
+}
+
+fn monitor_dimensions(monitor: &gtk::gdk::Monitor) -> (u32, u32) {
+    let geometry = monitor.geometry();
+    let scale_factor = monitor.scale_factor().max(1) as u32;
+    (
+        (geometry.width().max(1) as u32).saturating_mul(scale_factor),
+        (geometry.height().max(1) as u32).saturating_mul(scale_factor),
+    )
+}
+
+fn find_monitor_by_connector(
+    display: &gtk::gdk::Display,
+    connector: &str,
+) -> Option<gtk::gdk::Monitor> {
+    let monitors = display.monitors();
+    (0..monitors.n_items()).find_map(|index| {
+        let monitor = monitors
+            .item(index)
+            .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())?;
+        (monitor.connector().as_deref() == Some(connector)).then_some(monitor)
+    })
+}
+
 fn default_config_path() -> Result<PathBuf> {
     if let Some(path) = std::env::var_os("XDG_CONFIG_HOME") {
         return Ok(PathBuf::from(path)
@@ -541,18 +570,9 @@ fn build_wallpaper(
     }
 
     let display = gtk::gdk::Display::default().context("no GDK display is available")?;
-    let monitor_index = monitor_index.unwrap_or(0);
-    let monitor = display
-        .monitors()
-        .item(monitor_index)
-        .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())
-        .with_context(|| format!("display index {monitor_index} does not exist"))?;
-    let geometry = monitor.geometry();
-    let scale_factor = monitor.scale_factor().max(1) as u32;
-    let screen_dimensions = (
-        (geometry.width().max(1) as u32).saturating_mul(scale_factor),
-        (geometry.height().max(1) as u32).saturating_mul(scale_factor),
-    );
+    let launch_monitor_index = monitor_index.unwrap_or(0);
+    let launch_monitor = monitor_at(&display, launch_monitor_index)
+        .with_context(|| format!("display index {launch_monitor_index} does not exist"))?;
 
     let settings_path = config_path.with_file_name("settings.tsv");
     let active_source_path = Rc::new(
@@ -578,6 +598,14 @@ fn build_wallpaper(
             .or_insert_with(|| default_page_settings.clone());
     }
     let source_settings = Rc::new(RefCell::new(loaded_settings));
+    let initial_settings = source_settings.borrow()[&urls[initial_index]].clone();
+    let monitor = initial_settings
+        .monitor_connector
+        .as_deref()
+        .and_then(|connector| find_monitor_by_connector(&display, connector))
+        .unwrap_or_else(|| launch_monitor.clone());
+    let selected_monitor = Rc::new(RefCell::new(Some(monitor.clone())));
+    let screen_dimensions = Rc::new(Cell::new(monitor_dimensions(&monitor)));
 
     let content_manager = webkit::UserContentManager::new();
     let mut base_css = String::from(
@@ -590,7 +618,6 @@ fn build_wallpaper(
     }
     let base_css = Rc::new(base_css);
     let web_settings = webkit::Settings::new();
-    let initial_settings = source_settings.borrow()[&urls[initial_index]].clone();
     apply_source_customizations(&content_manager, &base_css, &initial_settings, &web_settings);
     let network_session = webkit::NetworkSession::default();
     network_session.set_tls_errors_policy(webkit::TLSErrorsPolicy::Fail);
@@ -940,7 +967,7 @@ fn build_wallpaper(
             false
         });
     }
-    let initial_url = resolve_url(&urls[initial_index], screen_dimensions);
+    let initial_url = resolve_url(&urls[initial_index], screen_dimensions.get());
     webview.load_uri(&initial_url);
 
     {
