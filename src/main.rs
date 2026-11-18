@@ -533,6 +533,15 @@ fn build_wallpaper(
     navigation.append(&reload_button);
     controls.append(&navigation);
 
+    let history = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    let back_button = gtk::Button::with_label("Back");
+    let forward_button = gtk::Button::with_label("Forward");
+    back_button.set_sensitive(false);
+    forward_button.set_sensitive(false);
+    history.append(&back_button);
+    history.append(&forward_button);
+    controls.append(&history);
+
     let page_settings = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let zoom_entry = gtk::Entry::new();
     zoom_entry.set_placeholder_text(Some("Zoom (0.25–5.0)"));
@@ -668,6 +677,30 @@ fn build_wallpaper(
     {
         let view = webview.clone();
         reload_button.connect_clicked(move |_| view.reload());
+    }
+    {
+        let view = webview.clone();
+        back_button.connect_clicked(move |_| {
+            if view.can_go_back() {
+                view.go_back();
+            }
+        });
+    }
+    {
+        let view = webview.clone();
+        forward_button.connect_clicked(move |_| {
+            if view.can_go_forward() {
+                view.go_forward();
+            }
+        });
+    }
+    {
+        let back_button = back_button.clone();
+        let forward_button = forward_button.clone();
+        webview.connect_load_changed(move |view, _| {
+            back_button.set_sensitive(view.can_go_back());
+            forward_button.set_sensitive(view.can_go_forward());
+        });
     }
 
     {
