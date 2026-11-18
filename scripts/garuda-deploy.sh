@@ -17,7 +17,8 @@ run      Run the app in the current Wayland session with the native controller.
 status   Show the user service status.
 
 Options:
-  --url URL  Add this URL to the persistent source list before install/run.
+  --url URL  install: add URL to persistent sources before enabling.
+             run: use URL temporarily for this session.
              Without --url, existing saved sources are used.
 EOF
 }
@@ -93,7 +94,9 @@ EOF
   run)
     check_wayland
     [[ -x "$binary" ]] || die "Not installed; run scripts/garuda-deploy.sh install first."
-    add_url
+    if [[ -n "$url" ]]; then
+      exec "$binary" --url "$url"
+    fi
     exec "$binary"
     ;;
   status)
