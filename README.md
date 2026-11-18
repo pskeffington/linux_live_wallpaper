@@ -64,21 +64,6 @@ Use `[[screenWidth]]` and `[[screenHeight]]` in a URL to substitute the selected
 cargo run --release -- --url 'https://picsum.photos/[[screenWidth]]/[[screenHeight]]' --monitor 0
 ```
 
-## Goals
-
-- Display arbitrary web pages as desktop backgrounds.
-- Manage multiple web sources and per-display assignments.
-- Provide reload, navigation, scaling, interaction and developer tools.
-- Restore wallpaper state after login.
-- Ship reproducible Arch package metadata and document compositor capabilities.
-
-See [ROADMAP.md](ROADMAP.md), [docs/PLASH_PARITY.md](docs/PLASH_PARITY.md), and the [Garuda Dr460nized deployment guide](docs/GARUDA_DR460NIZED.md) for feature scope and platform constraints.
-
-## License
-
-MIT. See [LICENSE](LICENSE).
-
-
 ## Build and install the Arch package
 
 The repository includes a Git-tracking Arch package recipe and a desktop launcher:
@@ -94,3 +79,16 @@ This builds the current `main` branch as `linux-live-wallpaper-git`, installs it
 linux-live-wallpaper --add http://172.20.30.64:8504/
 ```
 
+## Goals
+
+- Display arbitrary web pages as desktop backgrounds.
+- Manage multiple web sources and per-display assignments.
+- Provide reload, navigation, scaling, interaction and developer tools.
+- Restore wallpaper state after login.
+- Ship reproducible Arch package metadata and document compositor capabilities.
+
+See [ROADMAP.md](ROADMAP.md), [docs/PLASH_PARITY.md](docs/PLASH_PARITY.md), and the [Garuda Dr460nized deployment guide](docs/GARUDA_DR460NIZED.md) for feature scope and platform constraints.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
