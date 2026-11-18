@@ -325,7 +325,7 @@ fn build_wallpaper(
 
     let settings = webkit::Settings::new();
     if let Some(user_agent) = user_agent {
-        settings.set_user_agent(Some(&user_agent));
+        settings.set_user_agent(Some(user_agent));
     }
     let webview = webkit::WebView::builder()
         .settings(&settings)
