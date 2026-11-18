@@ -27,7 +27,7 @@ cargo run --release -- --list-monitors
 cargo run --release -- --url http://FEEDER_HOST:FEEDER_PORT/ --monitor 0
 ```
 
-Replace `FEEDER_HOST` and `FEEDER_PORT` with the address configured for your local receiver. Replace monitor index `0` with the index from `--list-monitors` if you want another display. The app should use the Tar1090 dashboard's web root, not its `data/aircraft.json` endpoint. If the dashboard uses a self-signed certificate, pass `--allow-self-signed FEEDER_HOST` with an `https://` URL. This accepts only unknown-CA errors for that host during the current run; the certificate hostname must still match.
+Replace `FEEDER_HOST` and `FEEDER_PORT` with the address configured for your local receiver. Replace monitor index `0` with the index from `--list-monitors` if you want another display. The app should use the Tar1090 dashboard's web root, not its `data/aircraft.json` endpoint. If the dashboard uses a self-signed certificate, use an `https://` URL and pass `--allow-self-signed FEEDER_HOST` to the helper. This accepts only unknown-CA errors for that host; the certificate hostname must still match. The helper carries this explicit setting into the login service.
 
 For example, for a feeder with a root page at port 8504:
 
@@ -44,6 +44,12 @@ After the dependencies are installed, run the deployment helper from the reposit
 
 ```sh
 bash scripts/garuda-deploy.sh install --url http://FEEDER_HOST:8504/
+```
+
+For an HTTPS Tar1090 endpoint with a self-signed certificate, use:
+
+```sh
+bash scripts/garuda-deploy.sh install --url https://FEEDER_HOST:8504/ --allow-self-signed FEEDER_HOST
 ```
 
 Replace `FEEDER_HOST` with the address of your Tar1090 host. The URL is added to the existing saved source list. The controller’s per-source zoom, opacity, and reload interval are saved in `settings.tsv` beside `sources.txt`. If `graphical-session.target` is active, the service starts immediately; otherwise it is enabled for the next login. Review the current source list with:
