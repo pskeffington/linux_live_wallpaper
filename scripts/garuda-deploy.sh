@@ -97,7 +97,7 @@ case "$action" in
   preflight)
     check_wayland
     check_native_deps
-    printf '%s\\n' "Wayland layer shell and native build/runtime dependencies are ready."
+    printf '%s\n' "Wayland layer shell and native build/runtime dependencies are ready."
     ;;
   install)
     check_wayland
