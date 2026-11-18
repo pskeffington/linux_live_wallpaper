@@ -6,7 +6,8 @@ use gtk::{Application, ApplicationWindow};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
-use std::fs;
+use std::fs::{self, File};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use webkit::prelude::*;
@@ -36,6 +37,10 @@ struct Args {
     /// Remove URL(s) from the persistent source list.
     #[arg(long = "remove", value_name = "URL", num_args = 1..)]
     remove: Vec<String>,
+
+    /// Start with a randomly selected source from the configured URLs.
+    #[arg(long)]
+    random_source: bool,
 
     /// Print the persistent source list and exit.
     #[arg(long)]
@@ -206,6 +211,7 @@ fn main() -> Result<()> {
     let transparent_background = args.transparent_background;
     let deactivate_on_battery = args.deactivate_on_battery;
     let background = args.background;
+    let random_source = args.random_source;
     let startup_error = Rc::new(RefCell::new(None::<String>));
 
     let app = Application::builder()
@@ -230,6 +236,7 @@ fn main() -> Result<()> {
             deactivate_on_battery,
             background,
             restore_saved_source,
+            random_source,
             &custom_css,
             &custom_js,
         ) {
@@ -244,6 +251,24 @@ fn main() -> Result<()> {
         bail!(error);
     }
     Ok(())
+}
+
+fn random_source_index(len: usize, current: Option<usize>) -> std::io::Result<usize> {
+    if len <= 1 {
+        return Ok(0);
+    }
+
+    let current = current.filter(|index| *index < len);
+    let choices = len - usize::from(current.is_some());
+    let mut bytes = [0u8; 8];
+    File::open("/dev/urandom")?.read_exact(&mut bytes)?;
+    let mut index = (u64::from_ne_bytes(bytes) % choices as u64) as usize;
+    if let Some(current) = current {
+        if index >= current {
+            index += 1;
+        }
+    }
+    Ok(index)
 }
 
 fn monitor_at(display: &gtk::gdk::Display, index: u32) -> Option<gtk::gdk::Monitor> {
@@ -599,6 +624,7 @@ fn build_wallpaper(
     deactivate_on_battery: bool,
     background: bool,
     restore_saved_source: bool,
+    random_source: bool,
     custom_css: &Option<String>,
     custom_js: &Option<String>,
 ) -> Result<()> {
@@ -622,9 +648,13 @@ fn build_wallpaper(
         Some(path) => load_browsing_mode(path)?,
         None => false,
     };
-    let initial_index = match active_source_path.as_ref().as_deref() {
-        Some(path) => load_active_source_index(path, urls)?,
-        None => 0,
+    let initial_index = if random_source {
+        random_source_index(urls.len(), None)?
+    } else {
+        match active_source_path.as_ref().as_deref() {
+            Some(path) => load_active_source_index(path, urls)?,
+            None => 0,
+        }
     };
     let default_page_settings = SourceSettings {
         zoom,
@@ -754,9 +784,11 @@ fn build_wallpaper(
     let navigation = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let previous_button = gtk::Button::with_label("Previous");
     let next_button = gtk::Button::with_label("Next");
+    let random_button = gtk::Button::with_label("Random");
     let reload_button = gtk::Button::with_label("Reload");
     navigation.append(&previous_button);
     navigation.append(&next_button);
+    navigation.append(&random_button);
     navigation.append(&reload_button);
     controls.append(&navigation);
 
@@ -905,6 +937,42 @@ fn build_wallpaper(
         next_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + 1) % list.len();
+            drop(list);
+            current.set(index);
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
+        });
+    }
+    {
+        let view = webview.clone();
+        let sources = sources.clone();
+        let current = current.clone();
+        let status = status.clone();
+        let settings = source_settings.clone();
+        let zoom_entry = zoom_entry.clone();
+        let reload_entry = reload_entry.clone();
+        let opacity_entry = opacity_entry.clone();
+        let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
+        let monitor_entry = monitor_entry.clone();
+        let display = display.clone();
+        let window = window.clone();
+        let launch_monitor = launch_monitor.clone();
+        let selected_monitor = selected_monitor.clone();
+        let screen_dimensions = screen_dimensions.clone();
+        random_button.connect_clicked(move |_| {
+            let list = sources.borrow();
+            let index = match random_source_index(list.len(), Some(current.get())) {
+                Ok(index) => index,
+                Err(error) => {
+                    status.set_text(&format!("Could not choose a random source: {error}"));
+                    return;
+                }
+            };
             drop(list);
             current.set(index);
             load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display, &window, &launch_monitor, &selected_monitor, &screen_dimensions, active_source_path.as_ref().as_deref());
