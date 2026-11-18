@@ -37,6 +37,13 @@ cargo run -- --list
 cargo run -- --remove https://news.example
 ```
 
+Use `--random` to choose a random source at startup from the saved list or the URLs supplied on that command line:
+
+```sh
+cargo run --release -- --random
+cargo run --release -- --url https://one.example --url https://two.example --random
+```
+
 Add at least one source before starting from saved sources, or provide temporary sources directly. Repeat `--url` for each source:
 
 ```sh
@@ -44,7 +51,7 @@ cargo run --release
 cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300 --reload-seconds 900 --monitor 0
 ```
 
-A native controller window opens with Previous, Next, Reload, browsing-mode, browser history, and persistent source controls. Add, remove, and reorder sources there; changes are saved to the source list. The controller also saves zoom, opacity, automatic reload interval, custom CSS, custom JavaScript, user-agent, and GDK output connector for each page. While browsing mode is enabled, right-click for Back, Forward, Reload, and Zoom In/Out, pinch with two touch points to magnify, or choose Inspect Page to open WebKit’s inspector; zoom changes save automatically. Use the connector shown by `--list-monitors`; assignments follow the output across source switches, with fallback when it is disconnected. The wallpaper surface is click-through by default; browsing mode enables pointer input and on-demand keyboard focus; Back and Forward navigate the active page’s WebKit history. Pages receive Plash-compatible `is-plash-app` and `plash-is-browsing-mode` classes on the root HTML element. With the controller focused, use Alt+Left/Right to switch sources, Ctrl+R to reload, and Ctrl+B to toggle browsing mode. Closing the controller exits the wallpaper.
+A native controller window opens with Previous, Next, Random, Reload, browsing-mode, browser history, and persistent source controls. Add, remove, and reorder sources there; changes are saved to the source list. The controller also saves zoom, opacity, automatic reload interval, custom CSS, custom JavaScript, user-agent, and GDK output connector for each page. While browsing mode is enabled, right-click for Back, Forward, Reload, and Zoom In/Out, pinch with two touch points to magnify, or choose Inspect Page to open WebKit’s inspector; zoom changes save automatically. Use the connector shown by `--list-monitors`; assignments follow the output across source switches, with fallback when it is disconnected. The wallpaper surface is click-through by default; browsing mode enables pointer input and on-demand keyboard focus; Back and Forward navigate the active page’s WebKit history. Pages receive Plash-compatible `is-plash-app` and `plash-is-browsing-mode` classes on the root HTML element. With the controller focused, use Alt+Left/Right to switch sources, Ctrl+R to reload, and Ctrl+B to toggle browsing mode. Closing the controller exits the wallpaper.
 
 Per-run page options include custom CSS and JavaScript, color inversion, surface opacity, page zoom, a custom user-agent, and a host-scoped exception for self-signed TLS certificates:
 

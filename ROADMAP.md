@@ -33,6 +33,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Native controller window with Previous/Next/Reload and browsing-mode toggle.
 - [ ] Full settings window and tray/background service.
 - [x] Switch among sources with native Previous/Next controls.
+- [x] Choose a random source at launch with `--random` and from the native controller.
 - [x] Add, remove and reorder sources from the native controller; the active saved source is restored by URL after restart.
 - [x] Add an opt-in Garuda user-level systemd service that starts saved sources at login; automatic enablement remains installer-driven.
 - [x] Add a browsing-mode right-click menu with Back, Forward, Reload and saved per-source Zoom In/Out actions.
