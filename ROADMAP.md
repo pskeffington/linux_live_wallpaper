@@ -46,7 +46,8 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Wayland layer-shell backend with tested compositor compatibility matrix.
 - [ ] X11 backend for desktops that do not support the layer-shell protocol.
 - [ ] Desktop autostart and session restoration.
-- [x] Add focused controller shortcuts for Previous/Next, Reload and browsing mode.\n- [ ] Add desktop-wide shortcuts, notifications and native actions.
+- [x] Add focused controller shortcuts for Previous/Next, Reload and browsing mode.
+- [ ] Add desktop-wide shortcuts, notifications and native actions.
 - [ ] Accessibility, localization and high-DPI behavior.
 
 ## Milestone 4 — Robustness and feature parity
