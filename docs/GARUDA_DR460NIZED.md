@@ -47,7 +47,7 @@ The helper builds and installs the app to `~/.local/bin/linux-live-wallpaper`, t
 bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/ --monitor 0
 ```
 
-The source is saved to the user's config directory. If `graphical-session.target` is active, the service starts immediately; otherwise, it is enabled for the next login. Review the saved sources with:
+The source is saved to the user's config directory. When launching from saved sources, the most recently selected URL is restored after restart; explicit URLs passed to a direct app invocation remain temporary. If `graphical-session.target` is active, the service starts immediately; otherwise, it is enabled for the next login. Review the saved sources with:
 
 ```sh
 ~/.local/bin/linux-live-wallpaper --list
