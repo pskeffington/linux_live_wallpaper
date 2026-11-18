@@ -4,7 +4,7 @@ use gtk::gio::prelude::*;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::fs;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -181,10 +181,12 @@ fn main() -> Result<()> {
     let app = Application::builder()
         .application_id("io.github.pskeffington.LinuxLiveWallpaper")
         .build();
+    let config_file = config_path.clone();
     app.connect_activate(move |app| {
         if let Err(error) = build_wallpaper(
             app,
             &urls,
+            config_file.clone(),
             monitor,
             rotate_seconds,
             reload_seconds,
