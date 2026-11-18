@@ -689,6 +689,8 @@ fn build_wallpaper(
     history.append(&forward_button);
     controls.append(&history);
 
+    let initial_page_settings =
+        source_settings.borrow()[&sources.borrow()[initial_index]].clone();
     let page_settings = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     let zoom_entry = gtk::Entry::new();
     zoom_entry.set_placeholder_text(Some("Zoom (0.25–5.0)"));
@@ -705,6 +707,35 @@ fn build_wallpaper(
     page_settings.append(&reload_entry);
     controls.append(&page_settings);
     controls.append(&save_settings_button);
+
+    let css_editor = gtk::TextView::new();
+    css_editor.set_monospace(true);
+    css_editor.set_wrap_mode(gtk::WrapMode::None);
+    let css_buffer = css_editor.buffer();
+    css_buffer.set_text(initial_page_settings.custom_css.as_deref().unwrap_or(""));
+    let css_scroll = gtk::ScrolledWindow::new();
+    css_scroll.set_min_content_height(100);
+    css_scroll.set_child(Some(&css_editor));
+    let css_expander = gtk::Expander::new(Some("Custom CSS for this page"));
+    css_expander.set_child(Some(&css_scroll));
+    controls.append(&css_expander);
+
+    let js_editor = gtk::TextView::new();
+    js_editor.set_monospace(true);
+    js_editor.set_wrap_mode(gtk::WrapMode::None);
+    let js_buffer = js_editor.buffer();
+    js_buffer.set_text(initial_page_settings.custom_js.as_deref().unwrap_or(""));
+    let js_scroll = gtk::ScrolledWindow::new();
+    js_scroll.set_min_content_height(100);
+    js_scroll.set_child(Some(&js_editor));
+    let js_expander = gtk::Expander::new(Some("Custom JavaScript for this page"));
+    js_expander.set_child(Some(&js_scroll));
+    controls.append(&js_expander);
+
+    let user_agent_entry = gtk::Entry::new();
+    user_agent_entry.set_placeholder_text(Some("User-Agent (blank uses WebKit default)"));
+    user_agent_entry.set_text(initial_page_settings.user_agent.as_deref().unwrap_or(""));
+    controls.append(&user_agent_entry);
 
     let source_entry = gtk::Entry::new();
     source_entry.set_placeholder_text(Some("https://example.com"));
@@ -805,18 +836,37 @@ fn build_wallpaper(
             let list = sources.borrow();
             let address = list[current.get().min(list.len() - 1)].clone();
             drop(list);
-            settings.borrow_mut().insert(
-                address,
-                SourceSettings {
-                    zoom: parsed_zoom,
-                    opacity: parsed_opacity,
-                    reload_seconds: parsed_reload,
-                },
-            );
+            let css_start = css_buffer.start_iter();
+            let css_end = css_buffer.end_iter();
+            let css_text = css_buffer.text(&css_start, &css_end, true).to_string();
+            let js_start = js_buffer.start_iter();
+            let js_end = js_buffer.end_iter();
+            let js_text = js_buffer.text(&js_start, &js_end, true).to_string();
+            let user_agent_text = user_agent_entry.text().to_string();
+            let user_agent = if user_agent_text.trim().is_empty() {
+                None
+            } else {
+                Some(user_agent_text)
+            };
+            {
+                let mut all_settings = settings.borrow_mut();
+                let Some(page) = all_settings.get_mut(&address) else {
+                    status.set_text("Could not find settings for the active page.");
+                    return;
+                };
+                page.zoom = parsed_zoom;
+                page.opacity = parsed_opacity;
+                page.reload_seconds = parsed_reload;
+                page.custom_css = Some(css_text);
+                page.custom_js = Some(js_text);
+                page.user_agent = user_agent;
+            }
             if let Err(error) = save_source_settings(&settings_path, &settings.borrow()) {
                 status.set_text(&format!("Could not save page settings: {error}"));
                 return;
             }
+            let page = settings.borrow()[&address].clone();
+            apply_source_customizations(&content_manager, &base_css, &page, &web_settings);
             view.set_zoom_level(parsed_zoom);
             view.set_opacity(parsed_opacity);
             status.set_text("Saved settings for this page.");
