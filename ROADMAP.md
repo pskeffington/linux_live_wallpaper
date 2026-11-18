@@ -11,7 +11,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 
 ## Milestone 1 — Visible wallpaper prototype
 
-- [x] Implement a full-output Wayland background layer with a WebKitGTK view (not yet build-verified).
+- [x] Implement a full-output Wayland background layer with a WebKitGTK view; compilation passes against current Arch packages, while compositor runtime validation remains open.
 - [x] Accept one or more web URLs from the command line.
 - [x] Add opt-in timed switching between configured URLs.
 - [x] Add configurable interval-based page reload; pause elapsed time while the wallpaper surface is hidden (suspend pauses callbacks naturally).
@@ -70,7 +70,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
 - [ ] AUR release workflow and signed tags.
 - [ ] CI: formatting, clippy, unit tests and verified build on supported Arch image.
-- [x] Add an Arch package build workflow; the workflow result is not yet confirmed.
+- [x] Add an Arch Linux CI workflow that builds against current distribution packages; latest build passed in GitHub Actions run 44283177523.
 - [ ] Package install, upgrade, removal, troubleshooting and compositor limitations for a release; Garuda helper instructions now cover per-user deploy/remove.
 - [ ] Release candidate acceptance on clean Arch Wayland and at least one additional compositor.
 
