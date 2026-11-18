@@ -30,10 +30,12 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Native settings window and tray/background service.
 - [ ] Reorder sources and switch among them interactively.
 - [ ] Restore wallpaper state after login.
-- [ ] Reload, navigate, zoom and web inspector/developer tools controls.
-- [x] List available displays and select one by its zero-based GDK monitor index.\n- [ ] Persist per-source display assignments and handle multi-monitor hotplug.
+- [ ] Reload, navigation controls and web inspector/developer tools.\n- [x] Configure launch-time page zoom and user-agent.
+- [x] List available displays and select one by its zero-based GDK monitor index.
+- [ ] Persist per-source display assignments and handle multi-monitor hotplug.
 - [ ] Interactive browsing mode toggle, click-through mode and navigation controls.
-- [x] Add opt-in battery-aware hiding based on Linux power-supply status.\n- [ ] Add remaining parity items, including image aspect-fill and richer power-management integration.
+- [x] Add opt-in battery-aware hiding based on Linux power-supply status.
+- [ ] Add remaining parity items, including image aspect-fill and richer power-management integration.
 
 ## Milestone 3 — Linux desktop integration
 
