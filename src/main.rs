@@ -497,6 +497,8 @@ fn build_wallpaper(
         });
     }
 
+    controls_window.present();
+
     if deactivate_on_battery {
         let wallpaper_window = window.clone();
         let controls_window = controls_window.clone();
@@ -511,8 +513,6 @@ fn build_wallpaper(
             controls_window.set_visible(false);
         }
     }
-
-    controls_window.present();
     Ok(())
 }
 
