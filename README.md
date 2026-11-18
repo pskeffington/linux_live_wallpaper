@@ -51,7 +51,7 @@ cargo run --release -- --url https://dashboard.example --css-file wallpaper.css 
 
 Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. `--allow-self-signed HOST` is opt-in and accepts only unknown-certificate-authority errors for that host; hostname mismatches, expired certificates, and other TLS errors still fail. Standalone image URLs are styled to fill the wallpaper viewport while preserving aspect ratio. Opacity must be between 0.0 and 1.0.
 
-Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Per-source zoom, opacity, and reload settings are stored alongside them in `settings.tsv`. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
+Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Per-source zoom, opacity, and reload settings are stored alongside them in `settings.tsv`; `active-source.txt` remembers the last selected URL when starting from saved sources. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
 List displays with `cargo run --release -- --list-monitors`, then select one by its zero-based GDK index with `--monitor INDEX`. Monitor ordering can change when displays are reconnected.
 
