@@ -68,6 +68,10 @@ struct Args {
     /// Request a transparent web and GTK window background (compositor support varies).
     #[arg(long)]
     transparent_background: bool,
+
+    /// Hide the wallpaper while a Linux battery reports discharging.
+    #[arg(long)]
+    deactivate_on_battery: bool,
 }
 
 fn main() -> Result<()> {
@@ -162,6 +166,7 @@ fn main() -> Result<()> {
     let reload_seconds = args.reload_seconds;
     let invert_colors = args.invert_colors;
     let transparent_background = args.transparent_background;
+    let deactivate_on_battery = args.deactivate_on_battery;
 
     let app = Application::builder()
         .application_id("io.github.pskeffington.LinuxLiveWallpaper")
@@ -176,6 +181,7 @@ fn main() -> Result<()> {
             opacity,
             invert_colors,
             transparent_background,
+            deactivate_on_battery,
             &custom_css,
             &custom_js,
         ) {
@@ -259,6 +265,7 @@ fn build_wallpaper(
     opacity: f64,
     invert_colors: bool,
     transparent_background: bool,
+    deactivate_on_battery: bool,
     custom_css: &Option<String>,
     custom_js: &Option<String>,
 ) -> Result<()> {
@@ -363,7 +370,37 @@ fn build_wallpaper(
     window.set_keyboard_mode(KeyboardMode::None);
     window.set_exclusive_zone(-1);
     window.present();
+
+    if deactivate_on_battery {
+        let wallpaper_window = window.clone();
+        gtk::glib::timeout_add_seconds_local(30, move || {
+            wallpaper_window.set_visible(!is_on_battery());
+            gtk::glib::ControlFlow::Continue
+        });
+        if is_on_battery() {
+            window.set_visible(false);
+        }
+    }
     Ok(())
+}
+
+fn is_on_battery() -> bool {
+    let Ok(supplies) = fs::read_dir("/sys/class/power_supply") else {
+        return false;
+    };
+
+    supplies.flatten().any(|entry| {
+        let path = entry.path();
+        let Ok(kind) = fs::read_to_string(path.join("type")) else {
+            return false;
+        };
+        if !kind.trim().eq_ignore_ascii_case("battery") {
+            return false;
+        }
+        fs::read_to_string(path.join("status"))
+            .map(|status| status.trim().eq_ignore_ascii_case("discharging"))
+            .unwrap_or(false)
+    })
 }
 
 #[cfg(test)]
