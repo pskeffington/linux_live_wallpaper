@@ -450,9 +450,10 @@ fn build_wallpaper(
         .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())
         .with_context(|| format!("display index {monitor_index} does not exist"))?;
     let geometry = monitor.geometry();
+    let scale_factor = monitor.scale_factor().max(1) as u32;
     let screen_dimensions = (
-        geometry.width().max(1) as u32,
-        geometry.height().max(1) as u32,
+        (geometry.width().max(1) as u32).saturating_mul(scale_factor),
+        (geometry.height().max(1) as u32).saturating_mul(scale_factor),
     );
 
     let settings_path = config_path.with_file_name("settings.tsv");
