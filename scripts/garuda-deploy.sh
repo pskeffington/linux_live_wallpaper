@@ -9,7 +9,7 @@ binary="${bin_dir}/${app_name}"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/garuda-deploy.sh <install|remove|run|status> [--url URL]
+Usage: scripts/garuda-deploy.sh <install|remove|run|status> [--url URL] [--allow-self-signed HOST]
 
 install  Build and install the binary for this user, then enable its systemd user service.
 remove   Stop/disable the service and remove app files created by this script.
@@ -20,6 +20,8 @@ Options:
   --url URL  install: add URL to persistent sources before enabling.
              run: use URL temporarily for this session.
              Without --url, existing saved sources are used.
+  --allow-self-signed HOST
+             Trust only unknown-CA certificate errors for HOST. Repeatable.
 EOF
 }
 
@@ -29,11 +31,17 @@ die() { printf '%s\n' "$*" >&2; exit 2; }
 action="$1"
 shift
 url=""
+tls_hosts=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --url)
       [[ $# -ge 2 ]] || die "--url requires a URL"
       url="$2"
+      shift 2
+      ;;
+    --allow-self-signed)
+      [[ $# -ge 2 ]] || die "--allow-self-signed requires a host"
+      tls_hosts+=("$2")
       shift 2
       ;;
     --help|-h)
@@ -44,6 +52,10 @@ while [[ $# -gt 0 ]]; do
       die "Unknown argument: $1"
       ;;
   esac
+done
+
+for host in "${tls_hosts[@]}"; do
+  [[ "$host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || die "Invalid TLS host: $host"
 done
 
 check_wayland() {
@@ -73,6 +85,10 @@ case "$action" in
     systemctl --user stop linux-live-wallpaper.service 2>/dev/null || true
     install -Dm755 "$built_binary" "$binary"
     install -d "$unit_dir"
+    service_exec="$binary --background"
+    for host in "${tls_hosts[@]}"; do
+      service_exec+=" --allow-self-signed $host"
+    done
     cat > "$unit_file" <<EOF
 [Unit]
 Description=Linux Live Wallpaper
@@ -84,7 +100,7 @@ ConditionEnvironment=WAYLAND_DISPLAY
 [Service]
 Type=simple
 Environment=GDK_BACKEND=wayland
-ExecStart=$binary --background
+ExecStart=$service_exec
 Restart=on-failure
 RestartSec=3
 
@@ -115,10 +131,14 @@ EOF
     check_wayland
     [[ -x "$binary" ]] || die "Not installed; run scripts/garuda-deploy.sh install first."
     systemctl --user stop linux-live-wallpaper.service 2>/dev/null || true
+    run_args=()
     if [[ -n "$url" ]]; then
-      exec "$binary" --url "$url"
+      run_args+=(--url "$url")
     fi
-    exec "$binary"
+    for host in "${tls_hosts[@]}"; do
+      run_args+=(--allow-self-signed "$host")
+    done
+    exec "$binary" "${run_args[@]}"
     ;;
   status)
     systemctl --user status linux-live-wallpaper.service
