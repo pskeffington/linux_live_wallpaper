@@ -81,6 +81,8 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
+Environment=GDK_BACKEND=wayland
+Environment=QT_QPA_PLATFORM=wayland
 ExecStart=$binary --background
 Restart=on-failure
 RestartSec=3
