@@ -480,6 +480,20 @@ fn decode_hex(encoded: &str) -> Result<String> {
     String::from_utf8(bytes).context("URL settings key is not valid UTF-8")
 }
 
+fn set_browsing_mode_class(view: &webkit::WebView, enabled: bool) {
+    let enabled = if enabled { "true" } else { "false" };
+    let script = format!(
+        "document.documentElement?.classList.toggle('plash-is-browsing-mode', {enabled});"
+    );
+    view.evaluate_javascript(
+        &script,
+        None,
+        None,
+        None::<&gtk::gio::Cancellable>,
+        |_| {},
+    );
+}
+
 fn apply_source_customizations(
     content_manager: &webkit::UserContentManager,
     base_css: &str,
@@ -502,6 +516,14 @@ fn apply_source_customizations(
     content_manager.add_style_sheet(&stylesheet);
 
     content_manager.remove_all_scripts();
+    let plash_marker = webkit::UserScript::new(
+        "document.documentElement?.classList.add('is-plash-app');",
+        webkit::UserContentInjectedFrames::TopFrame,
+        webkit::UserScriptInjectionTime::Start,
+        &[],
+        &[],
+    );
+    content_manager.add_script(&plash_marker);
     if let Some(source_js) = source.custom_js.as_deref().filter(|script| !script.is_empty()) {
         let script = webkit::UserScript::new(
             source_js,
@@ -682,6 +704,7 @@ fn build_wallpaper(
 
     let sources = Rc::new(RefCell::new(urls.to_vec()));
     let current = Rc::new(Cell::new(initial_index));
+    let browsing = Rc::new(Cell::new(initial_browsing_mode));
 
     let window = ApplicationWindow::builder()
         .application(app)
@@ -1024,6 +1047,7 @@ fn build_wallpaper(
         let back_button = back_button.clone();
         let forward_button = forward_button.clone();
         let status = status.clone();
+        let browsing = browsing.clone();
         webview.connect_load_changed(move |view, event| {
             back_button.set_sensitive(view.can_go_back());
             forward_button.set_sensitive(view.can_go_forward());
@@ -1037,6 +1061,7 @@ fn build_wallpaper(
                     status.set_text(&format!("Loaded response from {uri}"));
                 }
                 webkit::LoadEvent::Finished => {
+                    set_browsing_mode_class(view, browsing.get());
                     let uri = view.uri().map(|uri| uri.to_string()).unwrap_or_default();
                     status.set_text(&uri);
                 }
@@ -1247,7 +1272,6 @@ fn build_wallpaper(
         });
     }
 
-    let browsing = Rc::new(Cell::new(initial_browsing_mode));
     set_wallpaper_interactive(&window, initial_browsing_mode);
     browse_button.set_label(if initial_browsing_mode {
         "Disable browsing mode"
@@ -1256,12 +1280,14 @@ fn build_wallpaper(
     });
     {
         let wallpaper = window.clone();
+        let view = webview.clone();
         let browsing = browsing.clone();
         let browsing_mode_path = browsing_mode_path.clone();
         let status = status.clone();
         browse_button.connect_clicked(move |button| {
             let enabled = !browsing.get();
             browsing.set(enabled);
+            set_browsing_mode_class(&view, enabled);
             if let Some(path) = browsing_mode_path.as_ref().as_deref() {
                 if let Err(error) = save_browsing_mode(path, enabled) {
                     status.set_text(&format!("Changed browsing mode, but could not save it: {error:#}"));
@@ -1341,6 +1367,7 @@ fn build_wallpaper(
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
                 browsing.set(enabled);
+                set_browsing_mode_class(&view, enabled);
                 if let Some(path) = browsing_mode_path.as_ref().as_deref() {
                     if let Err(error) = save_browsing_mode(path, enabled) {
                         status.set_text(&format!("Changed browsing mode, but could not save it: {error:#}"));
