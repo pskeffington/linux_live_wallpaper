@@ -13,14 +13,23 @@ sudo pacman -S --needed base-devel cargo gtk4 gtk4-layer-shell webkitgtk-6.0
 cargo build --release
 ```
 
-Run one or more web sources; repeat `--url` to supply several:
+Add and inspect persistent sources:
 
 ```sh
-cargo run --release -- --url https://example.com
+cargo run -- --add https://example.com
+cargo run -- --add https://news.example --add https://status.example
+cargo run -- --list
+cargo run -- --remove https://news.example
+```
+
+Start the wallpaper from saved sources, or provide temporary sources directly. Repeat `--url` for each source:
+
+```sh
+cargo run --release
 cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300
 ```
 
-Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
+Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
 ## Goals
 
