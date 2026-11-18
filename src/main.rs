@@ -65,6 +65,14 @@ struct Args {
     #[arg(long, default_value = "1.0", value_name = "0.0..1.0")]
     opacity: String,
 
+    /// Page zoom factor from 0.25 to 5.0.
+    #[arg(long, default_value = "1.0", value_name = "0.25..5.0")]
+    zoom: String,
+
+    /// Custom HTTP User-Agent for loaded web pages.
+    #[arg(long, value_name = "STRING")]
+    user_agent: Option<String>,
+
     /// Request a transparent web and GTK window background (compositor support varies).
     #[arg(long)]
     transparent_background: bool,
@@ -159,6 +167,8 @@ fn main() -> Result<()> {
     }
 
     let opacity = parse_opacity(&args.opacity)?;
+    let zoom = parse_zoom(&args.zoom)?;
+    let user_agent = args.user_agent;
     let custom_css = read_optional_file(args.css_file.as_ref())?;
     let custom_js = read_optional_file(args.js_file.as_ref())?;
     let monitor = args.monitor;
@@ -179,6 +189,8 @@ fn main() -> Result<()> {
             rotate_seconds,
             reload_seconds,
             opacity,
+            zoom,
+            user_agent,
             invert_colors,
             transparent_background,
             deactivate_on_battery,
@@ -247,6 +259,14 @@ fn parse_opacity(value: &str) -> Result<f64> {
     Ok(opacity)
 }
 
+fn parse_zoom(value: &str) -> Result<f64> {
+    let zoom: f64 = value.parse().context("zoom must be a number from 0.25 to 5.0")?;
+    if !zoom.is_finite() || !(0.25..=5.0).contains(&zoom) {
+        bail!("zoom must be between 0.25 and 5.0");
+    }
+    Ok(zoom)
+}
+
 fn is_supported_url(address: &str) -> bool {
     let Some((scheme, remainder)) = address.split_once("://") else {
         return false;
@@ -263,6 +283,8 @@ fn build_wallpaper(
     rotate_seconds: u32,
     reload_seconds: u32,
     opacity: f64,
+    zoom: f64,
+    user_agent: Option<String>,
     invert_colors: bool,
     transparent_background: bool,
     deactivate_on_battery: bool,
@@ -301,10 +323,16 @@ fn build_wallpaper(
         content_manager.add_script(&script);
     }
 
+    let settings = webkit::Settings::new();
+    if let Some(user_agent) = user_agent {
+        settings.set_user_agent(Some(&user_agent));
+    }
     let webview = webkit::WebView::builder()
+        .settings(&settings)
         .user_content_manager(&content_manager)
         .build();
     webview.set_opacity(opacity);
+    webview.set_zoom_level(zoom);
     if transparent_background {
         webview.set_background_color(&gtk::gdk::RGBA::new(0.0, 0.0, 0.0, 0.0));
     }
