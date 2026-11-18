@@ -775,12 +775,18 @@ fn build_wallpaper(
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
         let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         previous_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + list.len() - 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     {
@@ -793,6 +799,12 @@ fn build_wallpaper(
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
         let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         next_button.connect_clicked(move |_| {
             let list = sources.borrow();
             let index = (current.get() + 1) % list.len();
@@ -811,6 +823,12 @@ fn build_wallpaper(
         let zoom_entry = zoom_entry.clone();
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         save_settings_button.connect_clicked(move |_| {
             let parsed_zoom = match parse_zoom(zoom_entry.text().trim()) {
                 Ok(value) => value,
@@ -915,6 +933,12 @@ fn build_wallpaper(
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
         let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         add_button.connect_clicked(move |_| {
             let address = entry.text().trim().to_owned();
             if !is_supported_url(&address) {
@@ -963,6 +987,12 @@ fn build_wallpaper(
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
         let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         remove_button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             if updated.len() <= 1 {
@@ -995,6 +1025,12 @@ fn build_wallpaper(
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
         let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         button.connect_clicked(move |_| {
             let mut updated = sources.borrow().clone();
             let index = current.get();
@@ -1058,6 +1094,12 @@ fn build_wallpaper(
         let browsing = browsing.clone();
         let browse_button = browse_button.clone();
         let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         key_controller.connect_key_pressed(move |_, key, _, modifiers| {
             use gtk::gdk::{Key, ModifierType};
 
@@ -1105,6 +1147,12 @@ fn build_wallpaper(
         let reload_entry = reload_entry.clone();
         let opacity_entry = opacity_entry.clone();
         let active_source_path = active_source_path.clone();
+        let content_manager = content_manager.clone();
+        let base_css = base_css.clone();
+        let web_settings = web_settings.clone();
+        let css_buffer = css_buffer.clone();
+        let js_buffer = js_buffer.clone();
+        let user_agent_entry = user_agent_entry.clone();
         gtk::glib::timeout_add_seconds_local(rotate_seconds, move || {
             let list = sources.borrow();
             if list.len() > 1 {
@@ -1186,6 +1234,12 @@ fn load_current(
     current: &Cell<usize>,
     status: &gtk::Label,
     settings: &RefCell<HashMap<String, SourceSettings>>,
+    content_manager: &webkit::UserContentManager,
+    base_css: &str,
+    web_settings: &webkit::Settings,
+    css_buffer: &gtk::TextBuffer,
+    js_buffer: &gtk::TextBuffer,
+    user_agent_entry: &gtk::Entry,
     zoom_entry: &gtk::Entry,
     opacity_entry: &gtk::Entry,
     reload_entry: &gtk::Entry,
@@ -1200,12 +1254,16 @@ fn load_current(
     current.set(index);
     let address = list[index].clone();
     drop(list);
-    let setting = settings.borrow().get(&address).copied().unwrap_or(SourceSettings {
+    let setting = settings.borrow().get(&address).cloned().unwrap_or(SourceSettings {
         zoom: 1.0,
         opacity: 1.0,
         reload_seconds: 0,
+        custom_css: None,
+        custom_js: None,
+        user_agent: None,
     });
     let resolved_address = resolve_url(&address, screen_dimensions);
+    apply_source_customizations(content_manager, base_css, &setting, web_settings);
     view.load_uri(&resolved_address);
     view.set_zoom_level(setting.zoom);
     view.set_opacity(setting.opacity);
@@ -1218,6 +1276,9 @@ fn load_current(
     zoom_entry.set_text(&setting.zoom.to_string());
     opacity_entry.set_text(&setting.opacity.to_string());
     reload_entry.set_text(&setting.reload_seconds.to_string());
+    css_buffer.set_text(setting.custom_css.as_deref().unwrap_or(""));
+    js_buffer.set_text(setting.custom_js.as_deref().unwrap_or(""));
+    user_agent_entry.set_text(setting.user_agent.as_deref().unwrap_or(""));
 }
 
 fn resolve_url(address: &str, dimensions: (u32, u32)) -> String {
