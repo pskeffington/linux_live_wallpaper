@@ -20,7 +20,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add launch-time custom CSS and JavaScript injection, invert colors, surface opacity, transparent background request, muted audio, and host-scoped self-signed certificate trust.
 - [x] Compile against current Arch packages in the Arch Linux CI container (GitHub Actions run 44283177523, source `71b7ced`).
 - [ ] Runtime-test wallpaper placement and rendering on Arch/Garuda with a layer-shell-capable compositor.
-- [ ] Detect unsupported compositor/protocol and report a recovery path.
+- [x] Garuda deployment helper checks the active compositor for `zwlr_layer_shell_v1` and reports the required backend when absent.
 - [x] Report WebKit load failures in the controller and service logs while retaining WebKit's stock error page.
 - [ ] Provide a safe quit/recovery shortcut and prevent the wallpaper from obscuring desktop controls.
 
