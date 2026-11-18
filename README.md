@@ -4,15 +4,23 @@ A Rust desktop application for running web content as an interactive live wallpa
 
 ## Status
 
-Early prototype. The current design targets GTK 4, WebKitGTK 6, and GTK Layer Shell on Wayland. Desktop wallpaper surfaces are compositor-specific: this backend is intended for compositors that implement the layer-shell protocol. X11 and non-layer-shell compositors need separate backends.
+Early prototype. The current design targets GTK 4, WebKitGTK 6, and GTK Layer Shell on Wayland. Desktop wallpaper surfaces are compositor-specific: this backend requires a compositor that implements the layer-shell protocol. X11 and non-layer-shell compositors need separate backends. The code has not yet been verified on a supported compositor.
 
 ## Build on Arch Linux
 
 ```sh
 sudo pacman -S --needed base-devel cargo gtk4 gtk4-layer-shell webkitgtk-6.0
 cargo build --release
-cargo run --release -- --url https://example.com
 ```
+
+Run one or more web sources; repeat `--url` to supply several:
+
+```sh
+cargo run --release -- --url https://example.com
+cargo run --release -- --url https://one.example --url https://two.example --rotate-seconds 300
+```
+
+Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
 
 ## Goals
 
@@ -22,7 +30,7 @@ cargo run --release -- --url https://example.com
 - Restore wallpaper state after login.
 - Ship reproducible Arch package metadata and document compositor capabilities.
 
-See [ROADMAP.md](ROADMAP.md) for feature scope and platform constraints. Current code is an early capability prototype, not yet validated on a target compositor.
+See [ROADMAP.md](ROADMAP.md) and [docs/PLASH_PARITY.md](docs/PLASH_PARITY.md) for feature scope and platform constraints.
 
 ## License
 
