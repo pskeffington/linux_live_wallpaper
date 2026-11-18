@@ -113,6 +113,7 @@ EOF
   run)
     check_wayland
     [[ -x "$binary" ]] || die "Not installed; run scripts/garuda-deploy.sh install first."
+    systemctl --user stop linux-live-wallpaper.service 2>/dev/null || true
     if [[ -n "$url" ]]; then
       exec "$binary" --url "$url"
     fi
