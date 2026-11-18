@@ -36,7 +36,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [x] Add, remove and reorder sources from the native controller; the active saved source is restored by URL after restart.
 - [x] Add an opt-in Garuda user-level systemd service that starts saved sources at login; automatic enablement remains installer-driven.
 - [x] Add a browsing-mode right-click menu with Back, Forward, Reload and saved per-source Zoom In/Out actions.
-- [ ] Add a web inspector/developer tools.
+- [x] Add a WebKit inspector action to the browsing-mode context menu; inspector window behavior still needs Garuda runtime validation.
 - [x] Configure launch-time page zoom and user-agent.
 - [x] Persist zoom, opacity, and automatic reload interval per source.
 - [x] List available displays and select one by its zero-based GDK monitor index.
