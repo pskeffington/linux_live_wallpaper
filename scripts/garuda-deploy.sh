@@ -20,6 +20,8 @@ Options:
   --url URL  install: add URL to persistent sources before enabling.
              run: use URL temporarily for this session.
              Without --url, existing saved sources are used.
+  --monitor INDEX
+             Select a zero-based GDK monitor for install or run.
   --allow-self-signed HOST
              Trust only unknown-CA certificate errors for HOST. Repeatable.
 EOF
@@ -31,12 +33,18 @@ die() { printf '%s\n' "$*" >&2; exit 2; }
 action="$1"
 shift
 url=""
+monitor_index=""
 tls_hosts=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --url)
       [[ $# -ge 2 ]] || die "--url requires a URL"
       url="$2"
+      shift 2
+      ;;
+    --monitor)
+      [[ $# -ge 2 ]] || die "--monitor requires an index"
+      monitor_index="$2"
       shift 2
       ;;
     --allow-self-signed)
@@ -54,7 +62,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -n "$monitor_index" && ! "$monitor_index" =~ ^[0-9]+$ ]]; then\n  die "Invalid monitor index: $monitor_index"\nfi\n\nfor host in "${tls_hosts[@]}"; do
+if [[ -n "$monitor_index" && ! "$monitor_index" =~ ^[0-9]+$ ]]; then
+  die "Invalid monitor index: $monitor_index"
+fi
+
+for host in "${tls_hosts[@]}"; do
   [[ "$host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || die "Invalid TLS host: $host"
 done
 
@@ -86,6 +98,9 @@ case "$action" in
     install -Dm755 "$built_binary" "$binary"
     install -d "$unit_dir"
     service_exec="$binary --background"
+    if [[ -n "$monitor_index" ]]; then
+      service_exec+=" --monitor $monitor_index"
+    fi
     for host in "${tls_hosts[@]}"; do
       service_exec+=" --allow-self-signed $host"
     done
@@ -134,6 +149,9 @@ EOF
     run_args=()
     if [[ -n "$url" ]]; then
       run_args+=(--url "$url")
+    fi
+    if [[ -n "$monitor_index" ]]; then
+      run_args+=(--monitor "$monitor_index")
     fi
     for host in "${tls_hosts[@]}"; do
       run_args+=(--allow-self-signed "$host")
