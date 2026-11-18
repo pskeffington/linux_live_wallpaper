@@ -69,9 +69,6 @@ case "$action" in
     if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
       source_list="$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt"
     fi
-    if [[ -s "$source_list" ]] && ! grep -q '[^[:space:]]' "$source_list"; then
-      die "The saved source list is empty. Add a URL with --url or --add."
-    fi
     if [[ ! -s "$source_list" ]]; then
       die "No saved sources. Re-run with --url http://FEEDER_HOST:8504/ or add a source first."
     fi
