@@ -641,7 +641,8 @@ fn build_wallpaper(
     let base_css = Rc::new(base_css);
     let web_settings = webkit::Settings::new();
     apply_source_customizations(&content_manager, &base_css, &initial_settings, &web_settings);
-    let network_session = webkit::NetworkSession::default();
+    let network_session = webkit::NetworkSession::default()
+        .context("could not create a WebKit network session")?;
     network_session.set_tls_errors_policy(webkit::TLSErrorsPolicy::Fail);
     let webview = webkit::WebView::builder()
         .network_session(&network_session)
@@ -1200,10 +1201,12 @@ fn build_wallpaper(
     }
 
     {
+        let monitors = display.monitors();
         let sources = sources.clone();
         let current = current.clone();
         let settings = source_settings.clone();
         let selected_monitor = selected_monitor.clone();
+        let display = display.clone();
         let window = window.clone();
         let controls_window = controls_window.clone();
         let status = status.clone();
@@ -1221,16 +1224,8 @@ fn build_wallpaper(
         let launch_monitor = launch_monitor.clone();
         let screen_dimensions = screen_dimensions.clone();
         let active_source_path = active_source_path.clone();
-        display.connect_monitor_removed(move |display, removed| {
-            let removed_selected = selected_monitor
-                .borrow()
-                .as_ref()
-                .map(|selected| selected == removed)
-                .unwrap_or(false);
-            if !removed_selected {
-                return;
-            }
-            if monitor_at(display, 0).is_none() {
+        monitors.connect_items_changed(move |_, _, _, _| {
+            if monitor_at(&display, 0).is_none() {
                 *selected_monitor.borrow_mut() = None;
                 window.set_visible(false);
                 controls_window.set_visible(false);
@@ -1245,64 +1240,7 @@ fn build_wallpaper(
             load_current(
                 &view, &sources, &current, &status, &settings, &content_manager,
                 &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry,
-                &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, display,
-                &window, &launch_monitor, &selected_monitor, &screen_dimensions,
-                active_source_path.as_ref().as_deref(),
-            );
-        });
-    }
-    {
-        let sources = sources.clone();
-        let current = current.clone();
-        let settings = source_settings.clone();
-        let selected_monitor = selected_monitor.clone();
-        let window = window.clone();
-        let controls_window = controls_window.clone();
-        let status = status.clone();
-        let view = webview.clone();
-        let content_manager = content_manager.clone();
-        let base_css = base_css.clone();
-        let web_settings = web_settings.clone();
-        let css_buffer = css_buffer.clone();
-        let js_buffer = js_buffer.clone();
-        let user_agent_entry = user_agent_entry.clone();
-        let monitor_entry = monitor_entry.clone();
-        let zoom_entry = zoom_entry.clone();
-        let opacity_entry = opacity_entry.clone();
-        let reload_entry = reload_entry.clone();
-        let launch_monitor = launch_monitor.clone();
-        let screen_dimensions = screen_dimensions.clone();
-        let active_source_path = active_source_path.clone();
-        display.connect_monitor_added(move |display, added| {
-            let should_reselect = if selected_monitor.borrow().is_none() {
-                true
-            } else {
-                let address = sources.borrow().get(current.get()).cloned();
-                let assigned = address.as_ref().and_then(|address| {
-                    settings
-                        .borrow()
-                        .get(address)
-                        .and_then(|setting| setting.monitor_connector.clone())
-                });
-                let preferred = assigned
-                    .as_deref()
-                    .filter(|connector| find_monitor_by_connector(display, connector).is_some())
-                    .map(str::to_owned)
-                    .or_else(|| launch_monitor.connector().map(|connector| connector.to_string()));
-                added.connector().as_deref() == preferred.as_deref()
-            };
-            if !should_reselect {
-                return;
-            }
-            let visible = !deactivate_on_battery || !is_on_battery();
-            window.set_visible(visible);
-            if !background {
-                controls_window.set_visible(visible);
-            }
-            load_current(
-                &view, &sources, &current, &status, &settings, &content_manager,
-                &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry,
-                &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, display,
+                &monitor_entry, &zoom_entry, &opacity_entry, &reload_entry, &display,
                 &window, &launch_monitor, &selected_monitor, &screen_dimensions,
                 active_source_path.as_ref().as_deref(),
             );
