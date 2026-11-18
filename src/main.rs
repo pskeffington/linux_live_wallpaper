@@ -1,5 +1,6 @@
 use anyhow::{bail, Context, Result};
 use clap::Parser;
+use gtk::gio::prelude::*;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
@@ -31,6 +32,10 @@ struct Args {
     /// Use an alternate source-list file.
     #[arg(long, value_name = "PATH")]
     config: Option<PathBuf>,
+
+    /// Display index to use (zero-based, ordered by GDK).
+    #[arg(long, value_name = "INDEX")]
+    monitor: Option<u32>,
 
     /// Seconds between automatic switches. Zero disables rotation.
     #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u32).range(0..))]
@@ -112,6 +117,7 @@ fn main() -> Result<()> {
     let opacity = parse_opacity(&args.opacity)?;
     let custom_css = read_optional_file(args.css_file.as_ref())?;
     let custom_js = read_optional_file(args.js_file.as_ref())?;
+    let monitor = args.monitor;
     let rotate_seconds = args.rotate_seconds;
     let reload_seconds = args.reload_seconds;
     let invert_colors = args.invert_colors;
@@ -124,6 +130,7 @@ fn main() -> Result<()> {
         if let Err(error) = build_wallpaper(
             app,
             &urls,
+            monitor,
             rotate_seconds,
             reload_seconds,
             opacity,
@@ -206,6 +213,7 @@ fn is_supported_url(address: &str) -> bool {
 fn build_wallpaper(
     app: &Application,
     urls: &[String],
+    monitor_index: Option<u32>,
     rotate_seconds: u32,
     reload_seconds: u32,
     opacity: f64,
@@ -297,6 +305,15 @@ fn build_wallpaper(
     }
 
     window.init_layer_shell();
+    if let Some(index) = monitor_index {
+        let display = gtk::gdk::Display::default().context("no GDK display is available")?;
+        let monitor = display
+            .monitors()
+            .item(index)
+            .and_then(|item| item.downcast::<gtk::gdk::Monitor>().ok())
+            .with_context(|| format!("display index {index} does not exist"))?;
+        window.set_monitor(&monitor);
+    }
     window.set_namespace("linux-live-wallpaper");
     window.set_layer(Layer::Background);
     window.set_anchor(Edge::Top, true);
