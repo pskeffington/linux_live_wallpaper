@@ -82,7 +82,7 @@ Description=Linux Live Wallpaper
 After=graphical-session.target
 PartOf=graphical-session.target
 ConditionEnvironment=XDG_SESSION_TYPE=wayland
-ConditionPathExists=%t/wayland-*
+ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
 Type=simple
