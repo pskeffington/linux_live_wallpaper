@@ -1051,7 +1051,7 @@ fn build_wallpaper(
         let current = current.clone();
         let zoom_entry = zoom_entry.clone();
         let status = status.clone();
-        webview.connect_context_menu(move |view, menu, _, _| {
+        webview.connect_context_menu(move |view, menu, _| {
             if !browsing.get() {
                 return false;
             }
