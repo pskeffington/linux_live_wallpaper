@@ -7,34 +7,45 @@ This guide targets Garuda Dr460nized's KDE Plasma desktop on Wayland. The applic
 - **PASS — Arch build:** GitHub Actions run [44289735869](https://github.com/pskeffington/linux_live_wallpaper/actions/runs/44289735869) completed `cargo build --release --locked` successfully on current Arch packages at source revision `bfe792e`, including context-menu, pinch zoom, and WebKit inspector controls.
 - **PASS — Wayland protocol:** `wayland-info` exited 0 on the Garuda Dragonized session and listed `zwlr_layer_shell_v1` (version 5).
 - **PASS — Tar1090 endpoint:** `curl -sSI --max-time 8 http://172.20.30.64:8504/` exited 0 and returned HTTP 200.
-- **BLOCKED — local runtime:** GTK 4.24.1 is installed, but `webkitgtk-6.0` and `gtk4-layer-shell` are absent. The dependency installer needs interactive sudo authorization before the app can be built and displayed here. Layer placement, Tar1090 rendering, and session startup remain unverified.
+- **PASS — deployment helper syntax:** `bash -n scripts/garuda-deploy.sh` exited 0.
+- **BLOCKED — local runtime:** `bash scripts/garuda-deploy.sh preflight` confirms `webkitgtk-6.0` and `gtk4-layer-shell` are absent. This managed session cannot elevate with sudo, so dependencies have not been installed. Building and rendering Tar1090 as the wallpaper, layer placement, and session startup remain unverified.
 
 ## Prepare Garuda
 
-Update the rolling system through Garuda's normal update workflow before installing build dependencies. Then open a terminal in the repository and install the project packages:
+Update the rolling system through Garuda's normal update workflow before installing build dependencies. From a terminal in the repository, first check the active compositor and installed native packages:
+
+```sh
+bash scripts/garuda-deploy.sh preflight
+```
+
+Preflight is read-only. It checks that the session is Wayland, asks the compositor for its protocols, then checks the GTK 4, WebKitGTK 6, and GTK Layer Shell development metadata.
+
+Install the project packages:
 
 ```sh
 bash scripts/install-arch-deps.sh
 ```
 
-The script installs `base-devel`, `cargo`, `gtk4`, `gtk4-layer-shell`, `wayland-utils`, and `webkitgtk-6.0` through pacman. It does not run a system upgrade or change desktop settings. Preview the package command first with:
+The script installs `base-devel`, `cargo`, `gtk4`, `gtk4-layer-shell`, `wayland-utils`, and `webkitgtk-6.0` through pacman. It does not run a system upgrade or change desktop settings. Review the package command first with:
 
 ```sh
 bash scripts/install-arch-deps.sh --dry-run
 ```
 
-Log in to the **Plasma (Wayland)** session at SDDM. Check the session and protocol:
+Pacman will request administrator authorization and confirmation. Once installation finishes, rerun preflight; continue only when it prints that layer shell and native dependencies are ready.
+
+Log in to the **Plasma (Wayland)** session at SDDM. The manual protocol check is:
 
 ```sh
-printf 'session=%s\n' "${XDG_SESSION_TYPE:-unset}"
+printf 'session=%s\\n' "${XDG_SESSION_TYPE:-unset}"
 wayland-info | rg zwlr_layer_shell_v1
 ```
 
-The session should report `wayland`, and the protocol query should return `zwlr_layer_shell_v1`. The Garuda deployment helper repeats this check and refuses to build or launch when the active compositor does not advertise layer shell. It also checks that GTK 4, WebKitGTK 6, and GTK Layer Shell development metadata is installed before building or running.
+The session should report `wayland`, and the protocol query should return `zwlr_layer_shell_v1`. The Garuda deployment helper repeats the preflight before building or running.
 
 ## Try the live Tar1090 feed
 
-The configured test feed is `172.20.30.64:8504`. Build the release binary, list monitor indices, then run the dashboard on the chosen monitor:
+The configured test feed is `172.20.30.64:8504`. After preflight passes, build the release binary, list monitor indices, then run the dashboard on the chosen monitor:
 
 ```sh
 cargo build --release --locked
@@ -44,11 +55,11 @@ cargo run --release -- --url http://172.20.30.64:8504/ --monitor 0
 
 Replace `0` with the desired zero-based index from the monitor listing. The deployment helper accepts the same index with `--monitor 0`, preserving the selected output when its login service starts. In the controller, enter the GDK connector name (for example, `DP-1`) in the active page's display field and save settings to assign that source to an output. The assignment is stored in `settings.tsv`; unplugging that output falls back to the launch output or first connected display, and reconnecting it restores the assignment. The app needs the dashboard web root, not Tar1090's `data/aircraft.json` endpoint. If the feed does not load, first check that `http://172.20.30.64:8504/` opens from the same desktop session.
 
-Close the foreground app with Ctrl+C. For a self-signed HTTPS dashboard, pass `--allow-self-signed HOST`; the exception accepts only unknown-CA errors for that host, and the certificate hostname must still match.
+Confirm visually that the page renders across the intended desktop surface and remains below desktop icons and panels. Close the foreground app with Ctrl+C. For a self-signed HTTPS dashboard, pass `--allow-self-signed HOST`; the exception accepts only unknown-CA errors for that host, and the certificate hostname must still match.
 
 ## Install and start at login
 
-The helper builds and installs the app to `~/.local/bin/linux-live-wallpaper`, then enables a per-user systemd service:
+After the foreground run works, the helper builds and installs the app to `~/.local/bin/linux-live-wallpaper`, then enables a per-user systemd service:
 
 ```sh
 bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/ --monitor 0
