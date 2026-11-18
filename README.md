@@ -22,7 +22,7 @@ cargo run --release -- --url http://172.20.30.64:8504/ --monitor 0
 To install it for the current user and enable startup at login:
 
 ```sh
-bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/
+bash scripts/garuda-deploy.sh install --url http://172.20.30.64:8504/ --monitor 0
 ```
 
 Add and inspect persistent sources:
