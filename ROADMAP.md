@@ -31,7 +31,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Full settings window and tray/background service.
 - [x] Switch among sources with native Previous/Next controls.
 - [x] Add, remove and reorder sources from the native controller; active selection is not restored after restart.
-- [ ] Restore wallpaper state after login.
+- [x] Add an opt-in Garuda user-level systemd service that starts saved sources at login; automatic enablement remains installer-driven.
 - [ ] Reload, navigation controls and web inspector/developer tools.
 - [x] Configure launch-time page zoom and user-agent.
 - [x] List available displays and select one by its zero-based GDK monitor index.
@@ -45,7 +45,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 
 - [ ] Wayland layer-shell backend with tested compositor compatibility matrix.
 - [ ] X11 backend for desktops that do not support the layer-shell protocol.
-- [ ] Desktop autostart and session restoration.
+- [x] Add a Garuda user service for desktop session startup; broader desktop autostart support remains open.
 - [x] Add focused controller shortcuts for Previous/Next, Reload and browsing mode.
 - [ ] Add desktop-wide shortcuts, notifications and native actions.
 - [ ] Accessibility, localization and high-DPI behavior.
@@ -64,7 +64,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 - [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
 - [ ] AUR release workflow and signed tags.
 - [ ] CI: formatting, clippy, unit tests and build on supported Arch image.
-- [ ] Document install, upgrade, removal, troubleshooting and compositor limitations.
+- [ ] Package install, upgrade, removal, troubleshooting and compositor limitations for a release; Garuda helper instructions now cover per-user deploy/remove.
 - [ ] Release candidate acceptance on clean Arch Wayland and at least one additional compositor.
 
 ## Technical constraints and risks
