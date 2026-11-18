@@ -9,7 +9,7 @@ Early prototype. The current design targets GTK 4, WebKitGTK 6, and GTK Layer Sh
 ## Build on Arch Linux
 
 ```sh
-sudo pacman -S --needed base-devel cargo gtk4 gtk4-layer-shell webkitgtk-6.0
+bash scripts/install-arch-deps.sh
 cargo build --release --locked
 ```
 
@@ -38,6 +38,12 @@ cargo run --release -- --url https://example.com --css-file wallpaper.css --js-f
 Custom JavaScript executes in each loaded page at document start. Only use scripts you trust. Web audio is muted by default. Opacity must be between 0.0 and 1.0.
 
 Sources are stored at `$XDG_CONFIG_HOME/linux-live-wallpaper/sources.txt`, or `~/.config/linux-live-wallpaper/sources.txt` when `XDG_CONFIG_HOME` is unset. Use `--config PATH` to select another file. Only `http://`, `https://`, and `file://` URLs are accepted. Rotation is disabled unless `--rotate-seconds` is greater than zero.
+
+For a local Tar1090 dashboard, point the wallpaper at its web root:
+
+```sh
+cargo run --release -- --url http://feeder-host:port/
+```
 
 ## Goals
 
