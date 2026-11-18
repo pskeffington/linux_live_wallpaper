@@ -7,7 +7,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Feature | Linux implementation target | Status |
 |---|---|---|
 | Remote or local website | WebKitGTK URL/file source | CLI supports http, https and file URLs |
-| Browsing mode | Temporarily enable pointer/keyboard input and navigation controls | Native controller toggles pointer input and on-demand keyboard focus; no browser history controls |
+| Browsing mode | Temporarily enable pointer/keyboard input and navigation controls | Native controller toggles pointer input and on-demand keyboard focus, with Back/Forward browser history buttons |
 | Page zoom | Zoom page contents and remember the level per website | Controller saves and restores per-source zoom; `--zoom` supplies the default for sources without saved settings |
 | Automatic reload interval | Per-source timer, pause while hidden or suspended | Controller saves a per-source interval; `--reload-seconds` supplies the default. Reload currently continues while hidden or suspended |
 | Multiple websites and switching | Source collection with active source | Persistent CLI and native controller add/remove/reorder, timed rotation, and Previous/Next controls; active source is not restored |
