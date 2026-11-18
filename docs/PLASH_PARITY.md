@@ -10,7 +10,7 @@ This project is an independent Linux implementation inspired by Plash. Plash's r
 | Browsing mode | Temporarily enable pointer/keyboard input and navigation controls | Not implemented |
 | Automatic reload interval | Per-source timer, pause while hidden or suspended | Launch-time `--reload-seconds`; it currently reloads continuously regardless of visibility |
 | Multiple websites and switching | Source collection with active source | CLI source list and timed rotation; no interactive switching UI |
-| Choose display | Monitor picker and per-source assignment | Not implemented |
+| Choose display | Monitor picker and per-source assignment | Launch-time `--monitor INDEX`; no saved assignment or monitor picker |
 | Invert colors | Optional injected stylesheet/filter | Launch-time `--invert-colors` |
 | Custom CSS and JavaScript | Explicit per-source customization fields | Launch-time files via `--css-file` and `--js-file`; not saved per source |
 | Opacity | Surface opacity where compositor supports it | Launch-time `--opacity` |
