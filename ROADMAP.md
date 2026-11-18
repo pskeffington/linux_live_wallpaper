@@ -52,7 +52,7 @@ The product goal is an independent Linux implementation of Plash's user-visible 
 ## Milestone 5 — Arch distribution quality
 
 - [x] Generate and commit Cargo.lock; use locked builds.
-- [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
+- [x] Add an Arch dependency installer and Garuda Dr460nized deployment guide.\n- [ ] Maintained PKGBUILD with a real release source and verified integrity checksum.
 - [ ] AUR release workflow and signed tags.
 - [ ] CI: formatting, clippy, unit tests and build on supported Arch image.
 - [ ] Document install, upgrade, removal, troubleshooting and compositor limitations.
