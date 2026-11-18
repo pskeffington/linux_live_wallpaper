@@ -1,24 +1,33 @@
-# Maintainer: linux-live-wallpaper contributors
-pkgname=linux-live-wallpaper
-pkgver=0.1.0
+pkgname=linux-live-wallpaper-git
+pkgver=0.1.0.r0.g0000000
 pkgrel=1
-pkgdesc="Interactive web wallpapers for Linux desktops"
+pkgdesc="Interactive web wallpapers for Wayland desktops"
 arch=('x86_64' 'aarch64')
 url="https://github.com/pskeffington/linux_live_wallpaper"
 license=('MIT')
 depends=('gtk4' 'webkitgtk-6.0' 'gtk4-layer-shell')
-makedepends=('cargo')
-# Release archives and a verified checksum must be added before publishing this PKGBUILD.
-source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz")
+makedepends=('cargo' 'git')
+optdepends=('wayland-utils: inspect the active compositor protocols')
+provides=('linux-live-wallpaper')
+conflicts=('linux-live-wallpaper')
+source=('linux_live_wallpaper::git+https://github.com/pskeffington/linux_live_wallpaper.git#branch=main')
 sha256sums=('SKIP')
 
+pkgver() {
+  cd "${srcdir}/linux_live_wallpaper"
+  printf '0.1.0.r%s.g%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
 build() {
-  cd "${srcdir}/linux_live_wallpaper-${pkgver}"
+  cd "${srcdir}/linux_live_wallpaper"
   cargo build --release --locked
 }
 
 package() {
-  cd "${srcdir}/linux_live_wallpaper-${pkgver}"
+  cd "${srcdir}/linux_live_wallpaper"
   install -Dm755 target/release/linux-live-wallpaper "${pkgdir}/usr/bin/linux-live-wallpaper"
   install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+  install -Dm644 docs/GARUDA_DR460NIZED.md "${pkgdir}/usr/share/doc/${pkgname}/GARUDA_DR460NIZED.md"
+  install -Dm644 data/linux-live-wallpaper.desktop "${pkgdir}/usr/share/applications/linux-live-wallpaper.desktop"
 }
