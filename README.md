@@ -8,6 +8,9 @@ Early prototype. The current design targets GTK 4, WebKitGTK 6, and GTK Layer Sh
 
 ## Build on Arch Linux
 
+Install dependencies and build directly:
+
+
 ```sh
 bash scripts/install-arch-deps.sh
 cargo build --release --locked
@@ -74,3 +77,20 @@ See [ROADMAP.md](ROADMAP.md), [docs/PLASH_PARITY.md](docs/PLASH_PARITY.md), and 
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+
+## Build and install the Arch package
+
+The repository includes a Git-tracking Arch package recipe and a desktop launcher:
+
+```sh
+cd packaging/arch
+makepkg -si
+```
+
+This builds the current `main` branch as `linux-live-wallpaper-git`, installs its native dependencies, and adds a desktop menu entry. Add a saved source before launching it from the menu:
+
+```sh
+linux-live-wallpaper --add http://172.20.30.64:8504/
+```
+
