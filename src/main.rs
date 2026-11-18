@@ -810,7 +810,7 @@ fn build_wallpaper(
             let index = (current.get() + 1) % list.len();
             drop(list);
             current.set(index);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     {
@@ -887,6 +887,7 @@ fn build_wallpaper(
             apply_source_customizations(&content_manager, &base_css, &page, &web_settings);
             view.set_zoom_level(parsed_zoom);
             view.set_opacity(parsed_opacity);
+            view.reload();
             status.set_text("Saved settings for this page.");
         });
     }
@@ -939,6 +940,7 @@ fn build_wallpaper(
         let css_buffer = css_buffer.clone();
         let js_buffer = js_buffer.clone();
         let user_agent_entry = user_agent_entry.clone();
+        let default_page_settings = default_page_settings.clone();
         add_button.connect_clicked(move |_| {
             let address = entry.text().trim().to_owned();
             if !is_supported_url(&address) {
@@ -960,18 +962,14 @@ fn build_wallpaper(
                 .borrow_mut()
                 .insert(
                     address,
-                    SourceSettings {
-                        zoom,
-                        opacity,
-                        reload_seconds,
-                    },
+                    default_page_settings.clone(),
                 );
             if let Err(error) = save_source_settings(&settings_path, &settings.borrow()) {
                 status.set_text(&format!("Could not save page settings: {error}"));
                 return;
             }
             current.set(sources.borrow().len() - 1);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
             entry.set_text("");
         });
     }
@@ -1011,7 +1009,7 @@ fn build_wallpaper(
                 return;
             }
             current.set(current.get().min(sources.borrow().len() - 1));
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
     for (button, direction) in [(&move_up_button, -1isize), (&move_down_button, 1isize)] {
@@ -1045,7 +1043,7 @@ fn build_wallpaper(
             }
             *sources.borrow_mut() = updated;
             current.set(target as usize);
-            load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+            load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
         });
     }
 
@@ -1111,14 +1109,14 @@ fn build_wallpaper(
                 let index = (current.get() + list.len() - 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::ALT_MASK) && key == Key::Right {
                 let list = sources.borrow();
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
                 gtk::glib::Propagation::Stop
             } else if modifiers.contains(ModifierType::CONTROL_MASK) && key == Key::b {
                 let enabled = !browsing.get();
@@ -1159,7 +1157,7 @@ fn build_wallpaper(
                 let index = (current.get() + 1) % list.len();
                 drop(list);
                 current.set(index);
-                load_current(&view, &sources, &current, &status, &settings, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
+                load_current(&view, &sources, &current, &status, &settings, &content_manager, &base_css, &web_settings, &css_buffer, &js_buffer, &user_agent_entry, &zoom_entry, &opacity_entry, &reload_entry, screen_dimensions, active_source_path.as_ref().as_deref());
             }
             gtk::glib::ControlFlow::Continue
         });
