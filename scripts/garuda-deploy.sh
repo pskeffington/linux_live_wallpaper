@@ -163,7 +163,11 @@ EOF
 set -euo pipefail
 [[ "${XDG_SESSION_TYPE:-}" == wayland ]] || exit 0
 [[ -n "${WAYLAND_DISPLAY:-}" ]] || exit 0
-systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS
+names=()
+for name in DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS; do
+  [[ -n "${!name:-}" ]] && names+=("$name")
+done
+(( ${#names[@]} )) && systemctl --user import-environment "${names[@]}"
 systemctl --user reset-failed linux-live-wallpaper.service 2>/dev/null || true
 systemctl --user restart linux-live-wallpaper.service
 EOF
