@@ -79,6 +79,38 @@ This builds the current `main` branch as `linux-live-wallpaper-git`, installs it
 linux-live-wallpaper --add http://172.20.30.64:8504/
 ```
 
+## Reboot/login autostart on Garuda KDE
+
+The installer configures a KDE XDG autostart entry that starts the existing
+systemd **user** service after the Wayland desktop session is available. This
+avoids starting the wallpaper before Plasma has populated session variables.
+The background service continues to provide restart-on-failure and journal logs.
+
+After updating the repository, rerun the installer (saved sources are preserved):
+
+```sh
+git pull
+bash scripts/install-arch.sh
+```
+
+To inspect a failed login startup without changing any state:
+
+```sh
+bash scripts/garuda-deploy.sh diagnose
+```
+
+For a manual session restart:
+
+```sh
+~/.local/bin/linux-live-wallpaper-session
+```
+
+Run that command as the logged-in desktop user in a Wayland session, not with
+sudo. If it fails, capture the diagnostic output before reinstallation.
+The launcher is installed in `~/.local/bin` and the KDE autostart entry in
+`~/.config/autostart`. Removal deletes both, leaving saved sources intact.
+KDE login autostart requires live verification on the target machine.
+
 ## Goals
 
 - Display arbitrary web pages as desktop backgrounds.
