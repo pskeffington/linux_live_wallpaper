@@ -1,5 +1,9 @@
 # Linux Live Wallpaper
 
+[![Arch build](https://github.com/pskeffington/linux_live_wallpaper/actions/workflows/arch-build.yml/badge.svg?branch=main)](https://github.com/pskeffington/linux_live_wallpaper/actions/workflows/arch-build.yml)
+
+Build evidence: [successful Arch CI run 44292973475](https://github.com/pskeffington/linux_live_wallpaper/actions/runs/44292973475) at `ee51045`. Compositor runtime acceptance remains separate.
+
 A Rust desktop application for running web content as an interactive live wallpaper, inspired by [Plash](https://github.com/sindresorhus/Plash). The initial compatibility target is Arch Linux and Arch-derived distributions, with a setup guide for Garuda Dr460nized (KDE Plasma).
 
 ## Status
